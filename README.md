@@ -1,4 +1,4 @@
-# OWASP CRS Docker Image
+# OWASP CRS Docker 이미지
 
 [![dockeri.co](http://dockeri.co/image/owasp/modsecurity-crs)](https://hub.docker.com/r/owasp/modsecurity-crs/)
 
@@ -7,113 +7,113 @@
 ) [![GitHub PRs](https://img.shields.io/github/issues-pr-raw/coreruleset/modsecurity-crs-docker.svg)](https://github.com/coreruleset/modsecurity-crs-docker/pulls
 ) [![License](https://img.shields.io/github/license/coreruleset/modsecurity-crs-docker.svg)](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/LICENSE)
 
-## What is the OWASP CRS
+## OWASP CRS란 무엇인가
 
-OWASP CRS is a set of generic attack detection rules for use with ModSecurity or compatible web application firewalls.
-ModSecurity is an open source, cross platform web application firewall (WAF) engine for Apache, IIS and Nginx.
+OWASP CRS는 ModSecurity 또는 호환 가능한 웹 애플리케이션 방화벽에서 사용할 수 있는 일반적인 공격 탐지 규칙 세트입니다.
+ModSecurity는 Apache, IIS 및 Nginx용 오픈소스 크로스 플랫폼 웹 애플리케이션 방화벽(WAF) 엔진입니다.
 
-## Supported Tags
+## 지원되는 태그
 
-### Stable Tags
+### 안정 태그 (Stable Tags)
 
-Stable Tags are composed of:
-   * CRS version, in the format `<major>[.<minor>[.<patch]]`
-   * web server variant
-   * OS variant (optional, nginx only)
-   * writable (optional)
-   * date, in the format `YYYYMMDDHHMM`
+안정 태그는 다음으로 구성됩니다:
+   * CRS 버전, `<major>[.<minor>[.<patch]]` 형식
+   * 웹 서버 변형
+   * OS 변형 (선택사항, nginx만)
+   * 쓰기 가능 (선택사항)
+   * 날짜, `YYYYMMDDHHMM` 형식
 
-The stable tag format is `<CRS version>-<web server>[-<os>][-<writable>]-<date>`.
-Examples:
+안정 태그 형식: `<CRS 버전>-<웹 서버>[-<os>][-<writable>]-<날짜>`
+예제:
    * `4-nginx-202401121309`
    * `4.0-apache-alpine-202401121309`
 
-### Rolling Tags
+### 롤링 태그 (Rolling Tags)
 
-Rolling tags are updated whenever a new stable tag release occurs. Rolling tags can be practical but should not be used in production.
+롤링 태그는 새로운 안정 태그가 릴리스될 때마다 업데이트됩니다. 롤링 태그는 실용적이지만 프로덕션 환경에서는 사용하지 않는 것이 좋습니다.
 
-Rolling Tags are composed of:
-   * web server variant
-   * OS variant (optional)
-   * writable (optional, nginx only)
+롤링 태그는 다음으로 구성됩니다:
+   * 웹 서버 변형
+   * OS 변형 (선택사항)
+   * 쓰기 가능 (선택사항, nginx만)
 
-The stable tag format is `<web server>[-<os>][-<writable>]`.
-Examples:
+롤링 태그 형식: `<웹 서버>[-<os>][-<writable>]`
+예제:
    * `nginx`
    * `apache-alpine`
 
-## OS Variants
+## OS 변형
 
-* nginx – *latest stable ModSecurity v3 on Nginx 1.28.0 official stable base image, and latest stable OWASP CRS 4.17.0*
+* nginx – *Nginx 1.28.0 공식 안정 베이스 이미지 기반 최신 안정 ModSecurity v3, 최신 안정 OWASP CRS 4.17.0*
    * [nginx](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/nginx/Dockerfile)
    * [nginx-alpine](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/nginx/Dockerfile-alpine)
-* Apache httpd – *last stable ModSecurity v2 on Apache 2.4.65 official stable base image, and latest stable OWASP CRS 4.17.0*
+* Apache httpd – *Apache 2.4.65 공식 안정 베이스 이미지 기반 최신 안정 ModSecurity v2, 최신 안정 OWASP CRS 4.17.0*
    * [apache](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/apache/Dockerfile)
    * [apache-alpine](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/apache/Dockerfile-alpine)
 
-## Read-only Root Filesystem
+## 읽기 전용 루트 파일시스템
 
 > [!IMPORTANT]
-> Read-only filesystem variants are currently only available for images based on nginx.
+> 읽기 전용 파일시스템 변형은 현재 nginx 기반 이미지에서만 사용할 수 있습니다.
 
-By default, the root filesystem of our containers are writable. We also provide images that are set up to run on a read-only filesystem for enhanced security.
+기본적으로 컨테이너의 루트 파일시스템은 쓰기 가능합니다. 보안 강화를 위해 읽기 전용 파일시스템에서 실행되도록 설정된 이미지도 제공합니다.
 
-Examples:
+예제:
    * `nginx-read-only`
    * `nginx-alpine-read-only`
 
-### Notes regarding Openresty version of this image
+### 이 이미지의 Openresty 버전에 관한 참고사항
 
-* The version was removed as no maintainer was found.
+* 유지보수자를 찾지 못해 해당 버전은 제거되었습니다.
 
-## Supported architectures
+## 지원되는 아키텍처
 
-Our builds are based on the official Apache httpd, nginx and Openresty images, which means we can only support the architectures they support.
+우리의 빌드는 공식 Apache httpd, nginx 및 Openresty 이미지를 기반으로 하므로, 이들이 지원하는 아키텍처만 지원할 수 있습니다.
 
-We currently provide images for the following architectures:
+현재 다음 아키텍처에 대한 이미지를 제공합니다:
 
 * linux/amd64
 * linux/arm/v7
 * linux/arm64/v8
 * linux/i386
 
-### Building
+### 빌딩
 
-If you want to see the targets of the build, use:
+빌드 대상을 확인하려면 다음을 사용하세요:
 
 ```bash
 docker buildx bake -f ./docker-bake.hcl --print
 ```
 
-To build for any platforms of your choosing, just use this example:
+선택한 플랫폼에 대해 빌드하려면 다음 예제를 사용하세요:
 
 ```bash
 docker buildx create --use --platform linux/amd64,linux/i386,linux/arm64,linux/arm/v7
 docker buildx bake -f docker-bake.hcl
 ```
 
-To build a specific target for a single platform only (replace target and platform strings in the example with your choices):
+단일 플랫폼에 대해만 특정 대상을 빌드하려면 (예제에서 대상 및 플랫폼 문자열을 원하는 것으로 바꾸세요):
 
 ```bash
 docker buildx bake -f docker-bake.hcl --set "*.platform=linux/amd64" nginx-alpine-writable
 ```
 
-### Notes regarding Openresty version of the image
+### 이미지의 Openresty 버전에 관한 참고사항
 
-Openresty image builds currently support only these architectures:
+Openresty 이미지 빌드는 현재 다음 아키텍처만 지원합니다:
 
 * linux/amd64
 * linux/arm64
 
-## Container Health Checks
+## 컨테이너 헬스 체크
 
-🆕 We add healthchecks to the images, so that containers return HTTP status code 200 from the `/healthz` endpoint. When a container has a healthcheck specified, it has a _health status_ in addition to its normal status. This status is initially `starting`. Whenever a health check passes, it becomes `healthy` (whatever state it was previously in). After a certain number of consecutive failures, it becomes `unhealthy`. See <https://docs.docker.com/engine/reference/builder/#healthcheck> for more information.
+🆕 이미지에 헬스체크를 추가하여 컨테이너가 `/healthz` 엔드포인트에서 HTTP 상태 코드 200을 반환하도록 했습니다. 컨테이너에 헬스체크가 지정되면 정상 상태 외에 _건강 상태_를 가지게 됩니다. 이 상태는 초기에 `starting`입니다. 헬스 체크가 통과될 때마다 `healthy`가 됩니다(이전 상태가 무엇이든 상관없이). 연속으로 일정 횟수 실패하면 `unhealthy`가 됩니다. 자세한 정보는 <https://docs.docker.com/engine/reference/builder/#healthcheck>를 참조하세요.
 
-## CRS Versions
+## CRS 버전
 
-> Hey, I used some specific git version with the containers? What happened?
+> 이전에 컨테이너와 함께 특정 git 버전을 사용했는데 어떻게 된 건가요?
 
-You can achieve the same results just by getting any version you want, and using docker volumes. See this example:
+원하는 버전을 가져와서 docker volumes를 사용하면 동일한 결과를 얻을 수 있습니다. 이 예제를 참조하세요:
 
 ```bash
 git clone https://github.com/coreruleset/coreruleset.git myrules
@@ -122,58 +122,58 @@ git checkout ac2a0d1
 docker run -p 8080:8080 -ti -e BLOCKING_PARANOIA=4 -v rules:/opt/owasp-crs/rules:ro --rm owasp/modsecurity-crs
 ```
 
-## Quick reference
+## 빠른 참조
 
-* **Where to get help**: the [OWASP CRS container repo](https://github.com/coreruleset/modsecurity-crs-docker), the [OWASP CRS Slack channel](https://owasp.org/slack/invite) (#coreruleset on owasp.slack.com), or [Stack Overflow](https://stackoverflow.com/questions/tagged/mod-security)
+* **도움을 받을 곳**: [OWASP CRS 컨테이너 리포지토리](https://github.com/coreruleset/modsecurity-crs-docker), [OWASP CRS Slack 채널](https://owasp.org/slack/invite) (owasp.slack.com의 #coreruleset), 또는 [Stack Overflow](https://stackoverflow.com/questions/tagged/mod-security)
 
-* **Where to file issues**: the [OWASP CRS container repo](https://github.com/coreruleset/modsecurity-crs-docker)
+* **이슈를 제출할 곳**: [OWASP CRS 컨테이너 리포지토리](https://github.com/coreruleset/modsecurity-crs-docker)
 
-* **Maintained By**: The CRS project maintainers
+* **유지보수**: CRS 프로젝트 유지보수자들
 
-## What is ModSecurity
+## ModSecurity란 무엇인가
 
-ModSecurity is an open source, cross platform Web Application Firewall (WAF) engine for Apache, IIS and Nginx. It has a robust event-based programming language which provides protection from a range of attacks against web applications and allows for HTTP traffic monitoring, logging and real-time analysis.
+ModSecurity는 Apache, IIS 및 Nginx용 오픈소스 크로스 플랫폼 웹 애플리케이션 방화벽(WAF) 엔진입니다. 웹 애플리케이션에 대한 다양한 공격으로부터 보호를 제공하고 HTTP 트래픽 모니터링, 로깅 및 실시간 분석을 가능하게 하는 강력한 이벤트 기반 프로그래밍 언어를 가지고 있습니다.
 
-### Nginx based images breaking change
+### Nginx 기반 이미지 주요 변경사항
 
-| ⚠️ WARNING          |
+| ⚠️ 경고          |
 |:---------------------------|
-| Nginx based images are now based on upstream nginx. This changed the way the config file for nginx is generated.  |
+| Nginx 기반 이미지는 이제 업스트림 nginx를 기반으로 합니다. 이로 인해 nginx 설정 파일이 생성되는 방식이 변경되었습니다.  |
 
-If using the [Nginx environment variables](https://github.com/coreruleset/modsecurity-crs-docker#nginx-env-variables) is not enough for your use case, you can mount your own `nginx.conf` file as the new template for generating the base config.
+[Nginx 환경 변수](https://github.com/coreruleset/modsecurity-crs-docker#nginx-env-variables) 사용만으로는 충분하지 않은 경우, 자체 `nginx.conf` 파일을 기본 설정 생성을 위한 새로운 템플릿으로 마운트할 수 있습니다.
 
-An example can be seen in the [docker-compose](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/docker-compose.yaml) file.
+예제는 [docker-compose](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/docker-compose.yaml) 파일에서 확인할 수 있습니다.
 
-> 💬 What happens if I want to make changes in a different file, like `/etc/nginx/conf.d/default.conf`?
-> You mount your local file, e.g. `nginx/default.conf` as the new template: `/etc/nginx/templates/conf.d/default.conf.template`. You can do this similarly with other files. Files in the templates directory will be copied and subdirectories will be preserved.
+> 💬 `/etc/nginx/conf.d/default.conf`와 같은 다른 파일에서 변경을 하고 싶다면 어떻게 해야 하나요?
+> 로컬 파일(예: `nginx/default.conf`)을 새로운 템플릿으로 마운트하면 됩니다: `/etc/nginx/templates/conf.d/default.conf.template`. 다른 파일들도 마찬가지로 할 수 있습니다. templates 디렉토리의 파일들은 복사되고 하위 디렉토리는 보존됩니다.
 
-Both nginx and httpd containers now run with an **unprivileged user**. This means that we cannot bind to ports below 1024, so you might need to correct your `PORT` and `SSL_PORT` settings. Now the defaults for both nginx and httpd are `8080` and `8443`.
+nginx와 httpd 컨테이너 모두 이제 **비특권 사용자**로 실행됩니다. 이는 1024 미만의 포트에 바인딩할 수 없음을 의미하므로 `PORT` 및 `SSL_PORT` 설정을 수정해야 할 수 있습니다. 이제 nginx와 httpd 모두의 기본값은 `8080`과 `8443`입니다.
 
-### Common ENV Variables
+### 공통 환경 변수
 
-These variables are common to image variants and will set defaults based on the image name.
-| Name | Description | httpd default | nginx / Openresty default (if different) |
+이러한 변수들은 이미지 변형에 공통적이며 이미지 이름에 따라 기본값을 설정합니다.
+| 이름 | 설명 | httpd 기본값 | nginx / Openresty 기본값 (다른 경우) |
 | -- | -- | -- | -- |
-| ACCESSLOG | Location of the custom log file | `/var/log/apache2/access.log` | `/var/log/nginx/access.log` |
-| BACKEND | Partial URL for the remote server of the `ProxyPass` (httpd) and `proxy_pass` (nginx) directives | `http://localhost:80` | - |
-| ERRORLOG | Location of the error log file | `/proc/self/fd/2` | - |
-| LOGLEVEL | Minimum level for log messages to be logged to the error log | `warn` | - |
-| METRICS_ALLOW_FROM | A single range of IP addresses that can access the metrics | `127.0.0.0/255.0.0.0 ::1/128` | `127.0.0.0/24` |
-| METRICS_DENY_FROM | A range of IP addresses that cannot access the metrics | `All` | `all` |
-| METRICSLOG | Location of metrics log file | `/dev/null` | - |
-| PROXY_SSL_CERT | A string indicating the path to the PEM-encoded X.509 certificate data file or token identifier of the proxied server | `/usr/local/apache2/conf/proxy.crt` | `/etc/nginx/conf/proxy.crt` |
-| PROXY_SSL_CERT_KEY | A string indicating the path to the PEM-encoded private key file of the proxied server | `/usr/local/apache2/conf/proxy.key` | `/etc/nginx/conf/proxy.key` |
-| PROXY_SSL_CIPHERS| A string indicating the cipher suite to connect to the backend via TLS | `"ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"` | - |
-| PROXY_SSL_PROTOCOLS | TLS protocols to enable for the connection to the backend | `"all -SSLv3 -TLSv1 -TLSv1.1"` | `TLSv1.2 TLSv1.3` |
-| PROXY_SSL  | SSL Proxy Engine Operation Switch | `off` | - |
-| PROXY_SSL_VERIFY | A string value indicating the type of proxy server Certificate verification | `none` | `off` |
-| PROXY_TIMEOUT  | Number of seconds for proxied requests to time out | `60` | `60s` |
-| SERVER_NAME | The server name | `localhost` | - |
-| SSL_CERT | A string indicating the path to the PEM-encoded X.509 certificate data file or token identifier of the proxied server | `/usr/local/apache2/conf/server.crt` | `/etc/nginx/conf/server.crt` |
-| SSL_CERT_KEY | A string indicating the path to the PEM-encoded private key file of the proxied server | `/usr/local/apache2/conf/server.key` | `/etc/nginx/conf/server.key` |
-| SSL_CIPHERS| A string indicating the cipher suite for incoming TLS connections | `"ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"` | - |
-| SSL_OCSP_STAPLING | Enable / disable OCSP stapling | `On` | `on` |
-| SSL_PROTOCOLS | TLS protocols to enable for the connection to the backend | `"all -SSLv3 -TLSv1 -TLSv1.1"` | `TLSv1.2 TLSv1.3` |
+| ACCESSLOG | 사용자 정의 로그 파일의 위치 | `/var/log/apache2/access.log` | `/var/log/nginx/access.log` |
+| BACKEND | `ProxyPass` (httpd) 및 `proxy_pass` (nginx) 지시문의 원격 서버 부분 URL | `http://localhost:80` | - |
+| ERRORLOG | 오류 로그 파일의 위치 | `/proc/self/fd/2` | - |
+| LOGLEVEL | 오류 로그에 기록될 로그 메시지의 최소 레벨 | `warn` | - |
+| METRICS_ALLOW_FROM | 메트릭에 액세스할 수 있는 IP 주소 범위 | `127.0.0.0/255.0.0.0 ::1/128` | `127.0.0.0/24` |
+| METRICS_DENY_FROM | 메트릭에 액세스할 수 없는 IP 주소 범위 | `All` | `all` |
+| METRICSLOG | 메트릭 로그 파일의 위치 | `/dev/null` | - |
+| PROXY_SSL_CERT | 프록시된 서버의 PEM 인코딩된 X.509 인증서 데이터 파일 또는 토큰 식별자의 경로를 나타내는 문자열 | `/usr/local/apache2/conf/proxy.crt` | `/etc/nginx/conf/proxy.crt` |
+| PROXY_SSL_CERT_KEY | 프록시된 서버의 PEM 인코딩된 개인 키 파일의 경로를 나타내는 문자열 | `/usr/local/apache2/conf/proxy.key` | `/etc/nginx/conf/proxy.key` |
+| PROXY_SSL_CIPHERS| TLS를 통해 백엔드에 연결할 암호화 스위트를 나타내는 문자열 | `"ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"` | - |
+| PROXY_SSL_PROTOCOLS | 백엔드 연결에 사용할 TLS 프로토콜 | `"all -SSLv3 -TLSv1 -TLSv1.1"` | `TLSv1.2 TLSv1.3` |
+| PROXY_SSL  | SSL 프록시 엔진 작동 스위치 | `off` | - |
+| PROXY_SSL_VERIFY | 프록시 서버 인증서 검증 유형을 나타내는 문자열 값 | `none` | `off` |
+| PROXY_TIMEOUT  | 프록시된 요청의 타임아웃 초 수 | `60` | `60s` |
+| SERVER_NAME | 서버 이름 | `localhost` | - |
+| SSL_CERT | 프록시된 서버의 PEM 인코딩된 X.509 인증서 데이터 파일 또는 토큰 식별자의 경로를 나타내는 문자열 | `/usr/local/apache2/conf/server.crt` | `/etc/nginx/conf/server.crt` |
+| SSL_CERT_KEY | 프록시된 서버의 PEM 인코딩된 개인 키 파일의 경로를 나타내는 문자열 | `/usr/local/apache2/conf/server.key` | `/etc/nginx/conf/server.key` |
+| SSL_CIPHERS| 수신 TLS 연결용 암호화 스위트를 나타내는 문자열 | `"ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"` | - |
+| SSL_OCSP_STAPLING | OCSP 스테이플링 활성화/비활성화 | `On` | `on` |
+| SSL_PROTOCOLS | 백엔드 연결에 사용할 TLS 프로토콜 | `"all -SSLv3 -TLSv1 -TLSv1.1"` | `TLSv1.2 TLSv1.3` |
 
 ### Apache ENV Variables
 
