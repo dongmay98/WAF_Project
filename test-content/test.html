@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAF 테스트 - 정적 파일</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 { color: #28a745; }
+        .test-result {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ 정적 파일 테스트 성공!</h1>
+        
+        <div class="test-result">
+            <strong>테스트 결과:</strong> 이 페이지가 정상적으로 로드되었다면 WAF를 통한 정적 파일 서빙이 정상 작동합니다.
+        </div>
+        
+        <p>현재 시간: <span id="currentTime"></span></p>
+        
+        <a href="/">&larr; 메인 페이지로 돌아가기</a>
+    </div>
+    
+    <script>
+        document.getElementById('currentTime').textContent = new Date().toLocaleString('ko-KR');
+    </script>
+</body>
+</html>
