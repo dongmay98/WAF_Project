@@ -1,214 +1,198 @@
-# OWASP CRS Docker 이미지
+# 🛡️ WAF Project - Nginx + ModSecurity + OWASP CRS
 
-[![dockeri.co](http://dockeri.co/image/owasp/modsecurity-crs)](https://hub.docker.com/r/owasp/modsecurity-crs/)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white)
+![ModSecurity](https://img.shields.io/badge/ModSecurity-v3-red?style=for-the-badge)
+![OWASP](https://img.shields.io/badge/OWASP-CRS%204.17.1-orange?style=for-the-badge)
 
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fcoreruleset%2Fmodsecurity-crs-docker%2Fbadge%3Fref%3Dmain&style=flat)](https://actions-badge.atrox.dev/coreruleset/modsecurity-crs-docker/goto?ref=main
-) [![GitHub issues](https://img.shields.io/github/issues-raw/coreruleset/modsecurity-crs-docker.svg)](https://github.com/coreruleset/modsecurity-crs-docker/issues
-) [![GitHub PRs](https://img.shields.io/github/issues-pr-raw/coreruleset/modsecurity-crs-docker.svg)](https://github.com/coreruleset/modsecurity-crs-docker/pulls
-) [![License](https://img.shields.io/github/license/coreruleset/modsecurity-crs-docker.svg)](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/LICENSE)
+Nginx + ModSecurity + OWASP Core Rule Set을 활용한 웹 애플리케이션 방화벽(WAF) 프로젝트입니다.
 
-## OWASP CRS란 무엇인가
+## 🎯 프로젝트 개요
 
-OWASP CRS는 ModSecurity 또는 호환 가능한 웹 애플리케이션 방화벽에서 사용할 수 있는 일반적인 공격 탐지 규칙 세트입니다.
-ModSecurity는 Nginx용 오픈소스 크로스 플랫폼 웹 애플리케이션 방화벽(WAF) 엔진입니다.
+이 프로젝트는 OWASP ModSecurity CRS를 기반으로 구축된 실용적인 WAF 솔루션입니다:
+- **WAF 엔진**: ModSecurity v3 + OWASP CRS 4.17.1
+- **웹서버**: Nginx (리버스 프록시)
+- **백엔드**: nginx:alpine (테스트용)
+- **오케스트레이션**: Docker Compose
 
-## 지원되는 태그
+## 🚀 빠른 시작
 
-### 안정 태그 (Stable Tags)
+### 시스템 요구사항
+- Docker & Docker Compose
+- 8080, 8443 포트 사용 가능
 
-안정 태그는 다음으로 구성됩니다:
-   * CRS 버전, `<major>[.<minor>[.<patch]]` 형식
-   * 웹 서버 변형 (nginx)
-   * OS 변형 (선택사항)
-   * 쓰기 가능 (선택사항)
-   * 날짜, `YYYYMMDDHHMM` 형식
+### 실행 방법
 
-안정 태그 형식: `<CRS 버전>-<웹 서버>[-<os>][-<writable>]-<날짜>`
-예제:
-   * `4-nginx-202401121309`
-   * `4.0-nginx-alpine-202401121309`
-
-### 롤링 태그 (Rolling Tags)
-
-롤링 태그는 새로운 안정 태그가 릴리스될 때마다 업데이트됩니다. 롤링 태그는 실용적이지만 프로덕션 환경에서는 사용하지 않는 것이 좋습니다.
-
-롤링 태그는 다음으로 구성됩니다:
-   * 웹 서버 변형 (nginx)
-   * OS 변형 (선택사항)
-   * 쓰기 가능 (선택사항)
-
-롤링 태그 형식: `<웹 서버>[-<os>][-<writable>]`
-예제:
-   * `nginx`
-   * `nginx-alpine`
-
-## OS 변형
-
-* nginx – *Nginx 1.28.0 공식 안정 베이스 이미지 기반 최신 안정 ModSecurity v3, 최신 안정 OWASP CRS 4.17.0*
-   * [nginx](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/nginx/Dockerfile)
-   * [nginx-alpine](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/nginx/Dockerfile-alpine)
-
-## 읽기 전용 루트 파일시스템
-
-> [!IMPORTANT]
-> 읽기 전용 파일시스템 변형은 현재 nginx 기반 이미지에서만 사용할 수 있습니다.
-
-기본적으로 컨테이너의 루트 파일시스템은 쓰기 가능합니다. 보안 강화를 위해 읽기 전용 파일시스템에서 실행되도록 설정된 이미지도 제공합니다.
-
-예제:
-   * `nginx-read-only`
-   * `nginx-alpine-read-only`
-
-## 지원되는 아키텍처
-
-우리의 빌드는 공식 nginx 이미지를 기반으로 하므로, nginx가 지원하는 아키텍처만 지원할 수 있습니다.
-
-현재 다음 아키텍처에 대한 이미지를 제공합니다:
-
-* linux/amd64
-* linux/arm/v7
-* linux/arm64/v8
-* linux/i386
-
-### 빌딩
-
-빌드 대상을 확인하려면 다음을 사용하세요:
-
+1. **레포지토리 클론**
 ```bash
-docker buildx bake -f ./docker-bake.hcl --print
+git clone https://github.com/dongmay98/WAF_Project.git
+cd WAF_Project
 ```
 
-선택한 플랫폼에 대해 빌드하려면 다음 예제를 사용하세요:
-
+2. **WAF 시스템 시작**
 ```bash
-docker buildx create --use --platform linux/amd64,linux/i386,linux/arm64,linux/arm/v7
-docker buildx bake -f docker-bake.hcl
+docker-compose up -d
 ```
 
-단일 플랫폼에 대해서만 특정 대상을 빌드하려면 (예제에서 대상 및 플랫폼 문자열을 원하는 것으로 바꾸세요):
-
+3. **접속 확인**
 ```bash
-docker buildx bake -f docker-bake.hcl --set "*.platform=linux/amd64" nginx-alpine-writable
+# HTTP 접속
+curl http://localhost:8080
+
+# 브라우저에서 확인
+open http://localhost:8080
 ```
 
-## 컨테이너 헬스 체크
-
-🆕 이미지에 헬스체크를 추가하여 컨테이너가 `/healthz` 엔드포인트에서 HTTP 상태 코드 200을 반환하도록 했습니다. 컨테이너에 헬스체크가 지정되면 정상 상태 외에 _건강 상태_를 가지게 됩니다. 이 상태는 초기에 `starting`입니다. 헬스 체크가 통과될 때마다 `healthy`가 됩니다(이전 상태가 무엇이든 상관없이). 연속으로 일정 횟수 실패하면 `unhealthy`가 됩니다. 자세한 정보는 <https://docs.docker.com/engine/reference/builder/#healthcheck>를 참조하세요.
-
-## CRS 버전
-
-> 이전에 컨테이너와 함께 특정 git 버전을 사용했는데 어떻게 된 건가요?
-
-원하는 버전을 가져와서 docker volumes를 사용하면 동일한 결과를 얻을 수 있습니다. 이 예제를 참조하세요:
-
+4. **서비스 상태 확인**
 ```bash
-git clone https://github.com/coreruleset/coreruleset.git myrules
-cd myrules
-git checkout ac2a0d1
-docker run -p 8080:8080 -ti -e BLOCKING_PARANOIA=4 -v rules:/opt/owasp-crs/rules:ro --rm owasp/modsecurity-crs
+docker-compose ps
 ```
 
-## 빠른 참조
+## 🏗️ 시스템 아키텍처
 
-* **도움을 받을 곳**: [OWASP CRS 컨테이너 리포지토리](https://github.com/coreruleset/modsecurity-crs-docker), [OWASP CRS Slack 채널](https://owasp.org/slack/invite) (owasp.slack.com의 #coreruleset), 또는 [Stack Overflow](https://stackoverflow.com/questions/tagged/mod-security)
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   클라이언트    │───▶│   WAF (Nginx)   │───▶│   백엔드 서버   │
+│   (브라우저)    │    │ ModSecurity v3  │    │ (nginx:alpine)  │
+│                 │    │ OWASP CRS 4.17.1│    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+      Port 80/443           Port 8080/8443          Port 80
+```
 
-* **이슈를 제출할 곳**: [OWASP CRS 컨테이너 리포지토리](https://github.com/coreruleset/modsecurity-crs-docker)
+### 구성 요소
+- **Frontend**: WAF (ModSecurity + Nginx) - 보안 필터링 수행
+- **Backend**: nginx:alpine - 실제 웹 콘텐츠 서빙
+- **통신**: HTTP/HTTPS 리버스 프록시 구조
 
-* **유지보수**: CRS 프로젝트 유지보수자들
+## 🧪 테스트 방법
 
-## ModSecurity란 무엇인가
+### 1. 기본 접속 테스트
+```bash
+# 메인 페이지
+curl -i http://localhost:8080
 
-ModSecurity는 Nginx용 오픈소스 크로스 플랫폼 웹 애플리케이션 방화벽(WAF) 엔진입니다. 웹 애플리케이션에 대한 다양한 공격으로부터 보호를 제공하고 HTTP 트래픽 모니터링, 로깅 및 실시간 분석을 가능하게 하는 강력한 이벤트 기반 프로그래밍 언어를 가지고 있습니다.
+# 정적 파일 테스트
+curl -i http://localhost:8080/test.html
 
-### Nginx 기반 이미지 주요 변경사항
+# 404 에러 테스트
+curl -i http://localhost:8080/api/nonexistent
+```
 
-| ⚠️ 경고          |
-|:---------------------------|
-| Nginx 기반 이미지는 이제 업스트림 nginx를 기반으로 합니다. 이로 인해 nginx 설정 파일이 생성되는 방식이 변경되었습니다.  |
+### 2. WAF 기능 테스트
+```bash
+# SQL Injection 테스트 (차단되어야 함)
+curl "http://localhost:8080/?id=1' OR '1'='1"
 
-[Nginx 환경 변수](https://github.com/coreruleset/modsecurity-crs-docker#nginx-env-variables) 사용만으로는 충분하지 않은 경우, 자체 `nginx.conf` 파일을 기본 설정 생성을 위한 새로운 템플릿으로 마운트할 수 있습니다.
+# XSS 테스트 (차단되어야 함)
+curl "http://localhost:8080/?search=<script>alert('xss')</script>"
+```
 
-예제는 [docker-compose](https://github.com/coreruleset/modsecurity-crs-docker/blob/master/docker-compose.yaml) 파일에서 확인할 수 있습니다.
+### 3. 로그 확인
+```bash
+# WAF 로그 실시간 확인
+docker-compose logs -f crs-nginx
 
-> 💬 `/etc/nginx/conf.d/default.conf`와 같은 다른 파일에서 변경을 하고 싶다면 어떻게 해야 하나요?
-> 로컬 파일(예: `nginx/default.conf`)을 새로운 템플릿으로 마운트하면 됩니다: `/etc/nginx/templates/conf.d/default.conf.template`. 다른 파일들도 마찬가지로 할 수 있습니다. templates 디렉토리의 파일들은 복사되고 하위 디렉토리는 보존됩니다.
+# 백엔드 로그 확인
+docker-compose logs backend
+```
 
-nginx 컨테이너는 이제 **비특권 사용자**로 실행됩니다. 이는 1024 미만의 포트에 바인딩할 수 없음을 의미하므로 `PORT` 및 `SSL_PORT` 설정을 수정해야 할 수 있습니다. 이제 nginx의 기본값은 `8080`과 `8443`입니다.
+## ⚙️ 설정 관리
 
-## TLS/HTTPS
+### WAF 보안 레벨 조정
 
-> [!IMPORTANT]  
-> 기본 설정은 처음 실행 시 자체 서명된 인증서를 생성합니다. 자체 인증서를 사용하려면(권장) `server.crt`와 `server.key`를 `/etc/nginx/conf/`에 복사하거나 마운트(`-v`)하세요. 이미지 실행 시 HTTPS 포트를 게시하는 것을 잊지 마세요.
->
-> ```bash
-> docker build -t my-modsec .
-> docker run -p 8443:8443 my-modsec
-> ```
-
-TLS는 `8443` 포트에 구성되며 기본적으로 활성화됩니다.
-
-[Mozilla SSL config tool](https://ssl-config.mozilla.org/)에서 가져온 합리적인 중간 기본값을 사용합니다. 기본값을 검토하고 요구사항에 가장 적합한 것을 선택하세요.
-
-`NGINX_ALWAYS_TLS_REDIRECT` 환경 변수를 설정하여 `http`에서 `https`로 항상 리다이렉트할 수 있습니다.
-
-## 프록시 구성
-
-owasp/modsecurity-crs 컨테이너 이미지는 기본 구성(즉, 설정 파일의 수동 변경이나 재정의 없이)에서 리버스 프록시로 작동하며 `BACKEND` 환경 변수를 통해 지정된 주소에서 실행 중인 백엔드가 필요합니다.
-
-> [!IMPORTANT]
-> `BACKEND` 변수를 웹 서버가 수신 대기하는 주소로 설정해야 합니다. 그렇지 않으면 owasp/modsecurity-crs 컨테이너에 요청을 보낼 때 유용한 일이 일어나지 않습니다(최소한 기본 구성에서는).
-
-ModSecurity는 다음과 같은 속성을 가진 리버스 프록시 설정에서 자주 사용됩니다:
-- 리버스 프록시가 공개 엔드포인트 역할
-- 리버스 프록시가 TLS 종료 수행(ModSecurity가 콘텐츠를 검사하는 데 필요)
-- ModSecurity가 리버스 프록시에서 실행되어 트래픽 필터링
-- 정상적인 트래픽만 백엔드로 전달
-
-이를 통해 기본 애플리케이션을 호스팅하는 웹서버를 수정하지 않고 ModSecurity를 사용할 수 있으며, ModSecurity를 현재 임베드할 수 없는 웹 서버도 보호할 수 있습니다.
-
-## 실제 사용 예제
-
-다음은 nginx 기반 WAF 프로젝트의 docker-compose.yaml 예제입니다:
+`docker-compose.yaml`에서 보안 설정을 조정할 수 있습니다:
 
 ```yaml
-version: '3.8'
-
-services:
-  waf:
-    image: owasp/modsecurity-crs:nginx
-    ports:
-      - "8080:8080"
-      - "8443:8443"
-    environment:
-      # WAF 기본 설정
-      BACKEND: http://backend:80
-      
-      # 보안 레벨 설정
-      BLOCKING_PARANOIA: 2
-      DETECTION_PARANOIA: 2
-      
-      # 이상 점수 임계값
-      ANOMALY_INBOUND: 10
-      ANOMALY_OUTBOUND: 5
-      
-      # ModSecurity 설정
-      MODSEC_RULE_ENGINE: "On"
-      MODSEC_AUDIT_ENGINE: "RelevantOnly"
-      MODSEC_AUDIT_LOG_FORMAT: "JSON"
-      
-      # Nginx 설정
-      NGINX_ALWAYS_TLS_REDIRECT: "off"
-      KEEPALIVE_TIMEOUT: "60s"
-      WORKER_CONNECTIONS: "1024"
-      
-    volumes:
-      - ./REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
-      - ./RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
-
-  backend:
-    image: nginx:alpine
-    expose:
-      - "80"
+environment:
+  # 편집증 레벨 (1-4, 높을수록 엄격)
+  PARANOIA: 1
+  BLOCKING_PARANOIA: 1
+  
+  # 이상 점수 임계값 (낮을수록 엄격)
+  ANOMALY_INBOUND: 5
+  ANOMALY_OUTBOUND: 4
 ```
 
-이 예제는 nginx WAF가 백엔드 서비스 앞에서 보안 필터링을 수행하는 구성을 보여줍니다.
+### 커스텀 룰 추가
+
+WAF 룰을 커스터마이징하려면:
+
+1. **사전 CRS 룰**: `REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf` 수정
+2. **사후 CRS 룰**: `RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf` 수정
+
+예제:
+```apache
+# SQL Injection 특정 패턴 허용
+SecRuleRemoveById 942100
+```
+
+## 🔧 문제 해결
+
+### 자주 발생하는 문제들
+
+**1. 502 Bad Gateway 에러**
+```bash
+# 백엔드 서비스 확인
+docker-compose ps backend
+
+# 백엔드 로그 확인
+docker-compose logs backend
+```
+
+**2. WAF가 너무 엄격해서 정상 요청이 차단됨**
+```bash
+# PARANOIA 레벨을 낮춤 (docker-compose.yaml)
+PARANOIA: 1  # 기본값
+
+# 또는 특정 룰 비활성화
+SecRuleRemoveById [rule_id]
+```
+
+**3. 포트 충돌**
+```bash
+# 사용 중인 포트 확인
+netstat -tulpn | grep :8080
+
+# docker-compose.yaml에서 포트 변경
+ports:
+  - "9080:8080"  # 로컬 포트를 9080으로 변경
+```
+
+## 📚 참고 자료
+
+### 공식 문서
+- [OWASP ModSecurity](https://owasp.org/www-project-modsecurity/)
+- [OWASP Core Rule Set](https://owasp.org/www-project-modsecurity-core-rule-set/)
+- [ModSecurity Reference Manual](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x))
+
+### 유용한 링크
+- [WAF 테스트 도구](https://github.com/coreruleset/crs-toolchain)
+- [보안 규칙 작성 가이드](https://coreruleset.org/docs/)
+- [성능 튜닝 가이드](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)#Performance)
+
+## 🤝 기여하기
+
+프로젝트 개선에 기여하고 싶으시다면:
+
+1. 이 레포지토리를 Fork 하세요
+2. 새로운 기능 브랜치를 만드세요 (`git checkout -b feature/awesome-feature`)
+3. 변경사항을 커밋하세요 (`git commit -m 'Add awesome feature'`)
+4. 브랜치에 Push 하세요 (`git push origin feature/awesome-feature`)
+5. Pull Request를 열어주세요
+
+## 📄 라이센스
+
+이 프로젝트는 [Apache License 2.0](LICENSE) 하에 배포됩니다.
+
+## ⚠️ 면책 조항
+
+이 프로젝트는 학습 및 테스트 목적으로 만들어졌습니다. 프로덕션 환경에서 사용하기 전에 반드시 보안 검토를 수행하시기 바랍니다.
+
+---
+
+## 🙏 감사 인사
+
+이 프로젝트는 다음 오픈소스 프로젝트들을 기반으로 합니다:
+- [OWASP ModSecurity Core Rule Set](https://github.com/coreruleset/coreruleset)
+- [ModSecurity-nginx](https://github.com/owasp-modsecurity/ModSecurity-nginx)
+- [OWASP ModSecurity](https://github.com/owasp-modsecurity/ModSecurity)
