@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Grid,
@@ -8,20 +8,49 @@ import {
   CardContent,
   Box,
   Button,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Security,
   Block,
   Timeline,
   Warning,
+  Dashboard,
+  BugReport,
 } from '@mui/icons-material';
 import { useWafLogsStore } from '../stores/wafLogsStore';
 import { wafLogsApi } from '../lib/api';
 import WafLogsTable from './WafLogsTable';
 import WafStatsCards from './WafStatsCards';
+import { SecurityTestPanel } from './SecurityTestPanel';
 import toast from 'react-hot-toast';
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
 const WafDashboard: React.FC = () => {
+  const [tabValue, setTabValue] = useState(0);
+  
   const {
     logs,
     stats,
@@ -82,6 +111,11 @@ const WafDashboard: React.FC = () => {
     }
   };
 
+  // 탭 변경 핸들러
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
   useEffect(() => {
     fetchLogs();
     fetchStats();
@@ -92,31 +126,59 @@ const WafDashboard: React.FC = () => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Typography variant="h4" component="h1" gutterBottom>
-          🛡️ WAF 로그 대시보드
+          🛡️ WAF 보안 대시보드
         </Typography>
-        <Button
-          variant="outlined"
-          onClick={handleSeedData}
-          disabled={isLoading}
-        >
-          더미 데이터 생성
-        </Button>
+        {tabValue === 0 && (
+          <Button
+            variant="outlined"
+            onClick={handleSeedData}
+            disabled={isLoading}
+          >
+            더미 데이터 생성
+          </Button>
+        )}
       </Box>
 
-      {/* 통계 카드들 */}
-      <WafStatsCards stats={stats} isLoading={isLoadingStats} />
+      {/* 탭 네비게이션 */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={tabValue} onChange={handleTabChange}>
+          <Tab 
+            icon={<Dashboard />} 
+            label="대시보드" 
+            id="tab-0"
+            aria-controls="tabpanel-0"
+          />
+          <Tab 
+            icon={<BugReport />} 
+            label="보안 테스트" 
+            id="tab-1"
+            aria-controls="tabpanel-1"
+          />
+        </Tabs>
+      </Box>
 
-      {/* WAF 로그 테이블 */}
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              최근 WAF 로그
-            </Typography>
-            <WafLogsTable />
-          </Paper>
+      {/* 대시보드 탭 */}
+      <TabPanel value={tabValue} index={0}>
+        {/* 통계 카드들 */}
+        <WafStatsCards stats={stats} isLoading={isLoadingStats} />
+
+        {/* WAF 로그 테이블 */}
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                최근 WAF 로그
+              </Typography>
+              <WafLogsTable />
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      </TabPanel>
+
+      {/* 보안 테스트 탭 */}
+      <TabPanel value={tabValue} index={1}>
+        <SecurityTestPanel />
+      </TabPanel>
     </Container>
   );
 };
