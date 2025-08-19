@@ -11,7 +11,7 @@ import { WafLogsModule } from './waf-logs/waf-logs.module';
       isGlobal: true,
     }),
     MongooseModule.forRoot(
-      process.env.MONGODB_URI || 'mongodb://localhost:27017/waf-dashboard'
+      process.env.MONGODB_URI || 'mongodb://admin:password@localhost:27018/waf-dashboard?authSource=admin'
     ),
     WafLogsModule,
   ],

@@ -38,10 +38,10 @@ export class WafLog {
   @Prop()
   userAgent?: string;
 
-  @Prop()
+  @Prop({ type: Object })
   requestHeaders?: Record<string, string>;
 
-  @Prop()
+  @Prop({ type: Object })
   responseHeaders?: Record<string, string>;
 
   @Prop()
@@ -55,3 +55,4 @@ export class WafLog {
 }
 
 export const WafLogSchema = SchemaFactory.createForClass(WafLog);
+

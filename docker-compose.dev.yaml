@@ -1,0 +1,50 @@
+services:
+  # Database Services for Development
+  mongo:
+    image: mongo:7
+    restart: always
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: waf-dashboard
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+
+  # ModSecurity CRS for testing
+  crs-nginx:
+    image: owasp/modsecurity-crs:nginx
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      SERVERNAME: localhost
+      PARANOIA: 1
+      BLOCKING_PARANOIA: 1
+      ANOMALY_INBOUND: 5
+      ANOMALY_OUTBOUND: 4
+      REPORTING_LEVEL: 2
+      BACKEND: http://test-backend:80
+    volumes:
+      - ./REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
+      - ./RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+
+  test-backend:
+    image: nginx:alpine
+    expose:
+      - "80"
+    volumes:
+      - ./test-content:/usr/share/nginx/html:ro
+
+volumes:
+  mongo_data:
+  redis_data:

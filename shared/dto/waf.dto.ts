@@ -5,7 +5,7 @@ export const GetWafLogsSchema = z.object({
   limit: z.number().int().min(1).max(100).default(10),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  clientIp: z.string().ip().optional(),
+  clientIp: z.string().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/, "Invalid IP address format").optional(),
   ruleId: z.string().optional(),
   severity: z.number().int().min(0).max(5).optional(),
 });

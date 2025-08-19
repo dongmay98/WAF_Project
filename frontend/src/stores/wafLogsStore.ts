@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { WafLogEntry, WafDashboardStats } from '../../shared/types/waf.types';
-import { GetWafLogsDto } from '../../shared/dto/waf.dto';
+import type { WafLogEntry, WafDashboardStats, GetWafLogsDto } from '../types/waf.types';
 
 interface WafLogsState {
   // Data
@@ -67,3 +66,4 @@ export const useWafLogsStore = create<WafLogsState>((set) => ({
   })),
   clearFilters: () => set({ filters: {} }),
 }));
+

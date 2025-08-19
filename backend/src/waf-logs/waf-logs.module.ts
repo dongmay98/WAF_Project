@@ -13,3 +13,4 @@ import { WafLog, WafLogSchema } from '../schemas/waf-log.schema';
   exports: [WafLogsService],
 })
 export class WafLogsModule {}
+

@@ -14,7 +14,7 @@ import {
   Timeline,
   Warning,
 } from '@mui/icons-material';
-import { WafDashboardStats } from '../../shared/types/waf.types';
+import type { WafDashboardStats } from '../types/waf.types';
 
 interface WafStatsCardsProps {
   stats: WafDashboardStats | null;
@@ -147,3 +147,4 @@ const WafStatsCards: React.FC<WafStatsCardsProps> = ({ stats, isLoading }) => {
 };
 
 export default WafStatsCards;
+

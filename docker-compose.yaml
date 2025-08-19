@@ -80,6 +80,66 @@ x-defaults: &default-settings
     #  - ./server.key:/usr/local/apache2/conf/server.key
 
 services:
+  # WAF Dashboard Services
+  dashboard-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      FRONTEND_URL: http://localhost:3000
+      # MongoDB connection string - 실제 MongoDB URL로 변경 필요
+      MONGODB_URI: mongodb://mongo:27017/waf-dashboard
+      # Redis connection string - 실제 Redis URL로 변경 필요  
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - waf-network
+
+  dashboard-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    depends_on:
+      - dashboard-backend
+    networks:
+      - waf-network
+
+  # Database Services
+  mongo:
+    image: mongo:7
+    restart: always
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: waf-dashboard
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - waf-network
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - waf-network
+
+  # ModSecurity CRS Services
   crs-nginx:
     image: owasp/modsecurity-crs:nginx
     ports:
@@ -97,6 +157,8 @@ services:
     volumes:
       - ./REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
       - ./RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+    networks:
+      - waf-network
 
   backend:
     image: nginx:alpine
@@ -104,3 +166,13 @@ services:
       - "80"
     volumes:
       - ./test-content:/usr/share/nginx/html:ro
+    networks:
+      - waf-network
+
+networks:
+  waf-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  redis_data:

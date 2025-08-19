@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WafLogsService } from './waf-logs.service';
-import { GetWafLogsDto, WafStatsDto } from '../../../shared/dto/waf.dto';
+import type { GetWafLogsDto, WafStatsDto } from '../../../shared/dto/waf.dto';
 
 @ApiTags('WAF Logs')
 @Controller('api/waf-logs')
@@ -36,3 +36,4 @@ export class WafLogsController {
     return this.wafLogsService.seedDummyData();
   }
 }
+

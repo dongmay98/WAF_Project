@@ -122,3 +122,4 @@ const WafDashboard: React.FC = () => {
 };
 
 export default WafDashboard;
+

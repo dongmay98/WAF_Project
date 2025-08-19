@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { GetWafLogsDto, WafStatsDto } from '../../shared/dto/waf.dto';
+import type { GetWafLogsDto, WafStatsDto } from '../types/waf.types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -33,3 +33,4 @@ export const wafLogsApi = {
   seedDummyData: () => 
     api.post('/api/waf-logs/seed'),
 };
+
