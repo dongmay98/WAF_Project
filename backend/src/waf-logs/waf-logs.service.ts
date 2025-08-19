@@ -2,7 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { WafLog, WafLogDocument } from '../schemas/waf-log.schema';
-import { GetWafLogsDto, WafStatsDto } from '../../../shared/dto/waf.dto';
+// import { GetWafLogsDto, WafStatsDto } from '../../../shared/dto/waf.dto';
+
+interface GetWafLogsDto {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+  clientIp?: string;
+  ruleId?: string;
+  severity?: number;
+}
+
+interface WafStatsDto {
+  startDate?: string;
+  endDate?: string;
+}
+import axios from 'axios';
 
 @Injectable()
 export class WafLogsService {
@@ -130,6 +146,342 @@ export class WafLogsService {
     await this.wafLogModel.insertMany(dummyLogs);
     
     return { message: `Created ${dummyLogs.length} dummy WAF logs` };
+  }
+
+  // 보안 테스트 메서드들
+  async simulateSqlInjectionAttack(target = 'http://localhost:8080') {
+    const sqlPayloads = [
+      "1' OR '1'='1",
+      "1' UNION SELECT 1,2,3--",
+      "admin'--",
+      "1'; DROP TABLE users--",
+      "' OR 1=1#"
+    ];
+
+    const results: Array<{
+      payload: string;
+      status: number | string;
+      blocked: boolean;
+      logId?: string;
+      error?: string;
+    }> = [];
+    for (const payload of sqlPayloads) {
+      try {
+        const response = await axios.get(`${target}/?id=${encodeURIComponent(payload)}`, {
+          timeout: 5000,
+          validateStatus: () => true, // 모든 HTTP 상태 코드 허용
+        });
+
+        const logEntry = await this.createTestLogEntry({
+          method: 'GET',
+          uri: `/?id=${payload}`,
+          responseCode: response.status,
+          attackType: 'SQL Injection',
+          payload,
+          isBlocked: response.status === 403,
+        });
+
+        results.push({
+          payload,
+          status: response.status,
+          blocked: response.status === 403,
+          logId: logEntry._id?.toString(),
+        });
+
+      } catch (error) {
+        results.push({
+          payload,
+          status: 'ERROR',
+          blocked: true,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      attackType: 'SQL Injection',
+      target,
+      totalTests: sqlPayloads.length,
+      blockedCount: results.filter(r => r.blocked).length,
+      results,
+    };
+  }
+
+  async simulateXssAttack(target = 'http://localhost:8080') {
+    const xssPayloads = [
+      "<script>alert('XSS')</script>",
+      "<img src=x onerror=alert('XSS')>",
+      "javascript:alert('XSS')",
+      "<svg onload=alert('XSS')>",
+      "';alert('XSS');//"
+    ];
+
+    const results: Array<{
+      payload: string;
+      status: number | string;
+      blocked: boolean;
+      logId?: string;
+      error?: string;
+    }> = [];
+    for (const payload of xssPayloads) {
+      try {
+        const response = await axios.get(`${target}/search?q=${encodeURIComponent(payload)}`, {
+          timeout: 5000,
+          validateStatus: () => true,
+        });
+
+        const logEntry = await this.createTestLogEntry({
+          method: 'GET',
+          uri: `/search?q=${payload}`,
+          responseCode: response.status,
+          attackType: 'XSS',
+          payload,
+          isBlocked: response.status === 403,
+        });
+
+        results.push({
+          payload,
+          status: response.status,
+          blocked: response.status === 403,
+          logId: logEntry._id?.toString(),
+        });
+
+      } catch (error) {
+        results.push({
+          payload,
+          status: 'ERROR',
+          blocked: true,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      attackType: 'XSS',
+      target,
+      totalTests: xssPayloads.length,
+      blockedCount: results.filter(r => r.blocked).length,
+      results,
+    };
+  }
+
+  async simulateCommandInjectionAttack(target = 'http://localhost:8080') {
+    const cmdPayloads = [
+      "; ls -la",
+      "| cat /etc/passwd",
+      "&& whoami",
+      "; ping 127.0.0.1",
+      "`id`"
+    ];
+
+    const results: Array<{
+      payload: string;
+      status: number | string;
+      blocked: boolean;
+      logId?: string;
+      error?: string;
+    }> = [];
+    for (const payload of cmdPayloads) {
+      try {
+        const response = await axios.post(`${target}/exec`, 
+          { command: payload }, 
+          {
+            timeout: 5000,
+            validateStatus: () => true,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+
+        const logEntry = await this.createTestLogEntry({
+          method: 'POST',
+          uri: '/exec',
+          responseCode: response.status,
+          attackType: 'Command Injection',
+          payload,
+          isBlocked: response.status === 403,
+        });
+
+        results.push({
+          payload,
+          status: response.status,
+          blocked: response.status === 403,
+          logId: logEntry._id?.toString(),
+        });
+
+      } catch (error) {
+        results.push({
+          payload,
+          status: 'ERROR',
+          blocked: true,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      attackType: 'Command Injection',
+      target,
+      totalTests: cmdPayloads.length,
+      blockedCount: results.filter(r => r.blocked).length,
+      results,
+    };
+  }
+
+  async simulateDirectoryTraversalAttack(target = 'http://localhost:8080') {
+    const traversalPayloads = [
+      "../../../etc/passwd",
+      "..\\..\\..\\windows\\system32\\drivers\\etc\\hosts",
+      "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+      "....//....//....//etc/passwd",
+      "/var/log/apache/access.log"
+    ];
+
+    const results: Array<{
+      payload: string;
+      status: number | string;
+      blocked: boolean;
+      logId?: string;
+      error?: string;
+    }> = [];
+    for (const payload of traversalPayloads) {
+      try {
+        const response = await axios.get(`${target}/file?path=${encodeURIComponent(payload)}`, {
+          timeout: 5000,
+          validateStatus: () => true,
+        });
+
+        const logEntry = await this.createTestLogEntry({
+          method: 'GET',
+          uri: `/file?path=${payload}`,
+          responseCode: response.status,
+          attackType: 'Directory Traversal',
+          payload,
+          isBlocked: response.status === 403,
+        });
+
+        results.push({
+          payload,
+          status: response.status,
+          blocked: response.status === 403,
+          logId: logEntry._id?.toString(),
+        });
+
+      } catch (error) {
+        results.push({
+          payload,
+          status: 'ERROR',
+          blocked: true,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      attackType: 'Directory Traversal',
+      target,
+      totalTests: traversalPayloads.length,
+      blockedCount: results.filter(r => r.blocked).length,
+      results,
+    };
+  }
+
+  async simulateAllAttacks(target = 'http://localhost:8080', count = 1) {
+    const results: Array<{
+      round: number;
+      sqlInjection: any;
+      xss: any;
+      commandInjection: any;
+      directoryTraversal: any;
+    }> = [];
+    
+    for (let i = 0; i < count; i++) {
+      const [sqlResults, xssResults, cmdResults, traversalResults] = await Promise.all([
+        this.simulateSqlInjectionAttack(target),
+        this.simulateXssAttack(target),
+        this.simulateCommandInjectionAttack(target),
+        this.simulateDirectoryTraversalAttack(target),
+      ]);
+
+      results.push({
+        round: i + 1,
+        sqlInjection: sqlResults,
+        xss: xssResults,
+        commandInjection: cmdResults,
+        directoryTraversal: traversalResults,
+      });
+
+      // 테스트 간격 (1초)
+      if (i < count - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    const totalTests = results.reduce((acc, round) => 
+      acc + round.sqlInjection.totalTests + round.xss.totalTests + 
+      round.commandInjection.totalTests + round.directoryTraversal.totalTests, 0
+    );
+
+    const totalBlocked = results.reduce((acc, round) => 
+      acc + round.sqlInjection.blockedCount + round.xss.blockedCount + 
+      round.commandInjection.blockedCount + round.directoryTraversal.blockedCount, 0
+    );
+
+    return {
+      target,
+      rounds: count,
+      totalTests,
+      totalBlocked,
+      blockingRate: `${((totalBlocked / totalTests) * 100).toFixed(1)}%`,
+      results,
+    };
+  }
+
+  private async createTestLogEntry(testData: {
+    method: string;
+    uri: string;
+    responseCode: number;
+    attackType: string;
+    payload: string;
+    isBlocked: boolean;
+  }) {
+    const logEntry = new this.wafLogModel({
+      timestamp: new Date(),
+      clientIp: '127.0.0.1', // 테스트 클라이언트 IP
+      requestMethod: testData.method,
+      requestUri: testData.uri,
+      responseCode: testData.responseCode,
+      ruleId: testData.isBlocked ? this.getRuleIdForAttackType(testData.attackType) : undefined,
+      message: testData.isBlocked ? `${testData.attackType} attack blocked` : undefined,
+      severity: testData.isBlocked ? this.getSeverityForAttackType(testData.attackType) : undefined,
+      tags: testData.isBlocked ? ['ATTACK', 'TEST', testData.attackType.toUpperCase().replace(' ', '_')] : ['TEST', 'NORMAL'],
+      fullLog: `[TEST] ${testData.method} ${testData.uri} - ${testData.responseCode} - Payload: ${testData.payload}`,
+      userAgent: 'WAF-Security-Tester/1.0',
+      attackType: testData.attackType,
+      isBlocked: testData.isBlocked,
+      requestBody: testData.method === 'POST' ? JSON.stringify({ payload: testData.payload }) : undefined,
+    });
+
+    return await logEntry.save();
+  }
+
+  private getRuleIdForAttackType(attackType: string): string {
+    const ruleMap = {
+      'SQL Injection': '942100',
+      'XSS': '941110',
+      'Command Injection': '932160',
+      'Directory Traversal': '930100',
+    };
+    return ruleMap[attackType] || '900000';
+  }
+
+  private getSeverityForAttackType(attackType: string): number {
+    const severityMap = {
+      'SQL Injection': 5,
+      'XSS': 4,
+      'Command Injection': 5,
+      'Directory Traversal': 3,
+    };
+    return severityMap[attackType] || 3;
   }
 
   private generateDummyLogs(count: number): Partial<WafLog>[] {
