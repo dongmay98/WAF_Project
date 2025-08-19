@@ -174,12 +174,77 @@ VITE_API_URL=http://localhost:3002
 
 ## 🛠️ 트러블슈팅
 
-### 일반적인 문제
+### ⚡ 주요 해결 사례: 보안 테스트 대시보드 반영 문제
+
+#### 📋 **문제 상황**
+- **증상**: 보안 테스트 실행은 성공하지만 대시보드에 결과가 반영되지 않음
+- **현상**: 테스트 완료 메시지는 정상, API 응답도 정상이지만 로그 테이블에 새로운 항목 없음
+
+#### 🔍 **진단 과정**
+1. **1차 가설**: 프론트엔드 자동 새로고침 문제
+   ```typescript
+   // 해결 시도: 테스트 완료 후 대시보드 자동 새로고침 추가
+   <SecurityTestPanel onTestComplete={() => {
+     fetchLogs();
+     fetchStats();
+   }} />
+   ```
+   **결과**: ❌ 문제 지속
+
+2. **2차 진단**: 실제 테스트 결과 분석
+   ```bash
+   curl -X POST http://localhost:3002/api/waf-logs/test/sql-injection \
+     -d '{"target": "http://localhost:8080"}'
+   ```
+   ```json
+   {
+     "results": [{
+       "status": "ERROR",
+       "error": "connect ECONNREFUSED ::1:8080"  // 🚨 핵심 단서!
+     }]
+   }
+   ```
+
+#### 💡 **근본 원인 발견**
+- **문제**: `localhost:8080`이 IPv6 주소(`::1:8080`)로 해석되어 Docker 컨테이너 간 통신 실패
+- **결과**: 테스트는 "성공"하지만 실제로는 WAF에 도달하지 못함
+
+#### ✅ **해결 방법**
+```typescript
+// AS-IS: localhost 사용 (IPv6 해석 문제)
+async simulateSqlInjectionAttack(target = 'http://localhost:8080') {
+
+// TO-BE: Docker 네트워크 서비스명 사용  
+async simulateSqlInjectionAttack(target = 'http://crs-nginx:8080') {
+```
+
+#### 📊 **해결 결과**
+```bash
+# 테스트 재실행 결과
+{
+  "status": 403,                    // ✅ WAF 차단!
+  "blocked": true,
+  "logId": "68a4b803629aadad79b93169" // ✅ DB 저장!
+}
+
+# 대시보드 반영 확인
+Time: 2025-08-19T17:44:35.943Z, IP: 127.0.0.1, Blocked: True, URI: /?id=' OR 1=1#
+Total: 82, Blocked: 27 (새로운 차단 로그 반영!)
+```
+
+#### 🎯 **핵심 학습 포인트**
+- **Docker 네트워크 통신**: 컨테이너 간 통신 시 `localhost` 대신 **서비스명** 사용 필수
+- **IPv6 해석 문제**: `localhost`가 예상과 다르게 해석될 수 있음  
+- **계층별 디버깅**: Frontend → Backend → Network → Docker 순차 진단
+- **에러 메시지 분석**: `connect ECONNREFUSED ::1:8080`에서 IPv6 단서 발견
+
+### 🔧 일반적인 문제
 1. **포트 충돌**: 다른 서비스에서 포트를 사용 중인 경우 docker-compose.yaml에서 포트 변경
 2. **MongoDB 연결 실패**: 컨테이너 시작 순서 문제 시 `docker-compose restart dashboard-backend`
 3. **Frontend 빌드 에러**: Node.js 버전 호환성 확인 (18+ 권장)
+4. **WAF 테스트 연결 실패**: Docker 네트워크 내부에서는 서비스명 사용 (`crs-nginx:8080`)
 
-### 로그 확인
+### 📋 로그 확인
 ```bash
 # 전체 서비스 로그
 docker-compose logs -f
@@ -187,6 +252,10 @@ docker-compose logs -f
 # 특정 서비스 로그
 docker-compose logs -f dashboard-backend
 docker-compose logs -f crs-nginx
+
+# 네트워크 상태 확인
+docker network ls
+docker inspect <container-name> | grep IPAddress
 ```
 
 ## 📄 라이센스
