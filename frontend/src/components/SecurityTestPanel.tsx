@@ -61,7 +61,11 @@ interface AllAttacksResult {
   }>;
 }
 
-export const SecurityTestPanel: React.FC = () => {
+interface SecurityTestPanelProps {
+  onTestComplete?: () => void;
+}
+
+export const SecurityTestPanel: React.FC<SecurityTestPanelProps> = ({ onTestComplete }) => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, TestResult | AllAttacksResult>>({});
   const [target, setTarget] = useState('http://localhost:8080');
@@ -76,6 +80,7 @@ export const SecurityTestPanel: React.FC = () => {
       const response = await wafLogsApi.testSqlInjection(target);
       setResults(prev => ({ ...prev, sql: response.data }));
       toast.success(`SQL Injection 테스트 완료: ${response.data.blockedCount}/${response.data.totalTests} 차단`);
+      onTestComplete?.();
     } catch (error) {
       toast.error('SQL Injection 테스트 실패');
       console.error(error);
@@ -90,6 +95,7 @@ export const SecurityTestPanel: React.FC = () => {
       const response = await wafLogsApi.testXss(target);
       setResults(prev => ({ ...prev, xss: response.data }));
       toast.success(`XSS 테스트 완료: ${response.data.blockedCount}/${response.data.totalTests} 차단`);
+      onTestComplete?.();
     } catch (error) {
       toast.error('XSS 테스트 실패');
       console.error(error);
@@ -104,6 +110,7 @@ export const SecurityTestPanel: React.FC = () => {
       const response = await wafLogsApi.testCommandInjection(target);
       setResults(prev => ({ ...prev, cmd: response.data }));
       toast.success(`Command Injection 테스트 완료: ${response.data.blockedCount}/${response.data.totalTests} 차단`);
+      onTestComplete?.();
     } catch (error) {
       toast.error('Command Injection 테스트 실패');
       console.error(error);
@@ -118,6 +125,7 @@ export const SecurityTestPanel: React.FC = () => {
       const response = await wafLogsApi.testDirectoryTraversal(target);
       setResults(prev => ({ ...prev, traversal: response.data }));
       toast.success(`Directory Traversal 테스트 완료: ${response.data.blockedCount}/${response.data.totalTests} 차단`);
+      onTestComplete?.();
     } catch (error) {
       toast.error('Directory Traversal 테스트 실패');
       console.error(error);
@@ -132,6 +140,7 @@ export const SecurityTestPanel: React.FC = () => {
       const response = await wafLogsApi.testAllAttacks(target, 1);
       setResults(prev => ({ ...prev, all: response.data }));
       toast.success(`전체 공격 테스트 완료: 차단율 ${response.data.blockingRate}`);
+      onTestComplete?.();
     } catch (error) {
       toast.error('전체 공격 테스트 실패');
       console.error(error);

@@ -177,7 +177,10 @@ const WafDashboard: React.FC = () => {
 
       {/* 보안 테스트 탭 */}
       <TabPanel value={tabValue} index={1}>
-        <SecurityTestPanel />
+        <SecurityTestPanel onTestComplete={() => {
+          fetchLogs();
+          fetchStats();
+        }} />
       </TabPanel>
     </Container>
   );
