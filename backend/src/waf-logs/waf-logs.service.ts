@@ -149,7 +149,7 @@ export class WafLogsService {
   }
 
   // 보안 테스트 메서드들
-  async simulateSqlInjectionAttack(target = 'http://crs-nginx:8080') {
+  async simulateSqlInjectionAttack(target = 'http://localhost:8080') {
     const sqlPayloads = [
       "1' OR '1'='1",
       "1' UNION SELECT 1,2,3--",
@@ -207,7 +207,7 @@ export class WafLogsService {
     };
   }
 
-  async simulateXssAttack(target = 'http://crs-nginx:8080') {
+  async simulateXssAttack(target = 'http://localhost:8080') {
     const xssPayloads = [
       "<script>alert('XSS')</script>",
       "<img src=x onerror=alert('XSS')>",
@@ -265,7 +265,7 @@ export class WafLogsService {
     };
   }
 
-  async simulateCommandInjectionAttack(target = 'http://crs-nginx:8080') {
+  async simulateCommandInjectionAttack(target = 'http://localhost:8080') {
     const cmdPayloads = [
       "; ls -la",
       "| cat /etc/passwd",
@@ -327,7 +327,7 @@ export class WafLogsService {
     };
   }
 
-  async simulateDirectoryTraversalAttack(target = 'http://crs-nginx:8080') {
+  async simulateDirectoryTraversalAttack(target = 'http://localhost:8080') {
     const traversalPayloads = [
       "../../../etc/passwd",
       "..\\..\\..\\windows\\system32\\drivers\\etc\\hosts",
@@ -385,7 +385,7 @@ export class WafLogsService {
     };
   }
 
-  async simulateAllAttacks(target = 'http://crs-nginx:8080', count = 1) {
+  async simulateAllAttacks(target = 'http://localhost:8080', count = 1) {
     const results: Array<{
       round: number;
       sqlInjection: any;
