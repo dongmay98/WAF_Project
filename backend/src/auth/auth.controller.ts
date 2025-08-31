@@ -3,11 +3,12 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import express from 'express';
 import { AuthService } from './auth.service';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('인증')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private config: ConfigService) {}
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
@@ -25,7 +26,8 @@ export class AuthController {
     const result = await this.authService.login(req.user);
     
     // 프론트엔드로 리다이렉트하면서 토큰 전달
-    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?token=${result.access_token}`;
+    const frontend = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const redirectUrl = `${frontend}/auth/callback?token=${result.access_token}`;
     res.redirect(redirectUrl);
   }
 
