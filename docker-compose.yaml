@@ -90,16 +90,18 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      FRONTEND_URL: http://localhost:3000
-      # MongoDB connection string - 실제 MongoDB URL로 변경 필요
-      MONGODB_URI: mongodb://mongo:27017/waf-dashboard
-      # Redis connection string - 실제 Redis URL로 변경 필요  
-      REDIS_URL: redis://redis:6379
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      MONGODB_URI: ${MONGODB_URI}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      # ModSecurity audit log file path (Serial file)
+      AUDIT_LOG_FILE: ${AUDIT_LOG_FILE:-/var/log/modsecurity/audit.log}
     depends_on:
       - mongo
       - redis
     networks:
       - waf-network
+    volumes:
+      - ./waf-audit:/var/log/modsecurity:ro
 
   dashboard-frontend:
     build:
@@ -142,6 +144,7 @@ services:
   # ModSecurity CRS Services
   crs-nginx:
     image: owasp/modsecurity-crs:nginx
+    user: "0:0"
     ports:
       - "8080:8080"
       # only available if SETTLS was enabled:
@@ -153,10 +156,18 @@ services:
       ANOMALY_INBOUND: 5
       ANOMALY_OUTBOUND: 4
       REPORTING_LEVEL: 2
-      BACKEND: http://backend:80
+      BACKEND: http://dashboard-backend:3001
+      # Enable ModSecurity audit logging in JSON to a single file
+      MODSEC_AUDIT_ENGINE: On
+      MODSEC_AUDIT_LOG_TYPE: Serial
+      MODSEC_AUDIT_LOG_FORMAT: JSON
+      MODSEC_AUDIT_LOG: /var/log/modsecurity/audit.log
     volumes:
       - ./REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
       - ./RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+      - ./waf-audit:/var/log/modsecurity
+      # Mount override as template so entrypoint can render to final path
+      - ./nginx/templates/modsecurity.d/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
     networks:
       - waf-network
 

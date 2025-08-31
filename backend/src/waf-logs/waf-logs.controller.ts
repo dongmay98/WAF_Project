@@ -37,6 +37,14 @@ export class WafLogsController {
     return this.wafLogsService.getStats(query);
   }
 
+  @Get('raw')
+  @ApiOperation({ summary: '원본 감사 로그 최근 N라인 조회' })
+  @ApiResponse({ status: 200, description: '원본 감사 로그가 성공적으로 조회되었습니다.' })
+  async getRawAudit(@Query('limit') limit?: string) {
+    const n = Math.max(1, Math.min(parseInt(limit || '200', 10) || 200, 2000));
+    return this.wafLogsService.getRawAuditLog(n);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'WAF 로그 상세 조회' })
   @ApiResponse({ status: 200, description: 'WAF 로그 상세가 성공적으로 조회되었습니다.' })
@@ -85,5 +93,6 @@ export class WafLogsController {
   async testAllAttacks(@Body() body: { target?: string; count?: number }) {
     return this.wafLogsService.simulateAllAttacks(body.target, body.count);
   }
+
 }
 

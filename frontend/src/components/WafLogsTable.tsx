@@ -16,17 +16,16 @@ import {
   Button,
   Typography,
   TextField,
-  Grid,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import {
   Visibility,
   Block,
   CheckCircle,
-  Warning,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -209,7 +208,7 @@ const WafLogsTable: React.FC = () => {
         {/* @ts-ignore */}
         <Grid container spacing={2} alignItems="center">
           {/* @ts-ignore */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item component="div" xs={12} sm={6} md={3}>
             <TextField
               fullWidth
               size="small"
@@ -219,7 +218,7 @@ const WafLogsTable: React.FC = () => {
             />
           </Grid>
           {/* @ts-ignore */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item component="div" xs={12} sm={6} md={3}>
             <TextField
               fullWidth
               size="small"
@@ -229,7 +228,7 @@ const WafLogsTable: React.FC = () => {
             />
           </Grid>
           {/* @ts-ignore */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item component="div" xs={12} sm={6} md={3}>
             <FormControl fullWidth size="small">
               <InputLabel>심각도</InputLabel>
               <Select
@@ -247,7 +246,7 @@ const WafLogsTable: React.FC = () => {
             </FormControl>
           </Grid>
           {/* @ts-ignore */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item component="div" xs={12} sm={6} md={3}>
             <Box display="flex" gap={1}>
               <Button variant="contained" size="small" onClick={handleApplyFilters}>
                 적용
@@ -304,29 +303,30 @@ const WafLogsTable: React.FC = () => {
           {selectedLog && (
             <Grid container spacing={2}>
               {/* @ts-ignore */}
-              <Grid item xs={12} sm={6}>
+              <Grid item component="div" xs={12} sm={6}>
                 <Typography variant="subtitle2">시간</Typography>
                 <Typography variant="body2">
                   {format(new Date(selectedLog.timestamp), 'yyyy-MM-dd HH:mm:ss', { locale: ko })}
                 </Typography>
               </Grid>
               {/* @ts-ignore */}
-              <Grid item xs={12} sm={6}>
+              <Grid item component="div" xs={12} sm={6}>
                 <Typography variant="subtitle2">IP 주소</Typography>
                 <Typography variant="body2">{selectedLog.clientIp}</Typography>
               </Grid>
               {/* @ts-ignore */}
-              <Grid item xs={12} sm={6}>
+              <Grid item component="div" xs={12} sm={6}>
                 <Typography variant="subtitle2">요청 방법</Typography>
                 <Typography variant="body2">{selectedLog.requestMethod}</Typography>
               </Grid>
               {/* @ts-ignore */}
-              <Grid item xs={12} sm={6}>
+              <Grid item component="div" xs={12} sm={6}>
                 <Typography variant="subtitle2">응답 코드</Typography>
                 <Typography variant="body2">{selectedLog.responseCode}</Typography>
               </Grid>
               {/* @ts-ignore */}
-              <Grid item xs={12}>
+              {/* @ts-ignore */}
+              <Grid item component="div" xs={12}>
                 <Typography variant="subtitle2">요청 URI</Typography>
                 <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
                   {selectedLog.requestUri}
@@ -335,7 +335,7 @@ const WafLogsTable: React.FC = () => {
               {/* @ts-ignore */}
               {selectedLog.ruleId && (
                 // @ts-ignore
-                <Grid item xs={12} sm={6}>
+                <Grid item component="div" xs={12} sm={6}>
                   <Typography variant="subtitle2">룰 ID</Typography>
                   <Typography variant="body2">{selectedLog.ruleId}</Typography>
                 </Grid>
@@ -343,7 +343,7 @@ const WafLogsTable: React.FC = () => {
               {/* @ts-ignore */}
               {selectedLog.severity && (
                 // @ts-ignore
-                <Grid item xs={12} sm={6}>
+                <Grid item component="div" xs={12} sm={6}>
                   <Typography variant="subtitle2">심각도</Typography>
                   <Typography variant="body2">{selectedLog.severity}</Typography>
                 </Grid>
@@ -351,7 +351,7 @@ const WafLogsTable: React.FC = () => {
               {/* @ts-ignore */}
               {selectedLog.attackType && (
                 // @ts-ignore
-                <Grid item xs={12}>
+                <Grid item component="div" xs={12}>
                   <Typography variant="subtitle2">공격 유형</Typography>
                   <Typography variant="body2">{selectedLog.attackType}</Typography>
                 </Grid>
@@ -359,7 +359,7 @@ const WafLogsTable: React.FC = () => {
               {/* @ts-ignore */}
               {selectedLog.message && (
                 // @ts-ignore
-                <Grid item xs={12}>
+                <Grid item component="div" xs={12}>
                   <Typography variant="subtitle2">메시지</Typography>
                   <Typography variant="body2">{selectedLog.message}</Typography>
                 </Grid>

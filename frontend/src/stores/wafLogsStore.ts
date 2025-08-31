@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { WafLogEntry, WafDashboardStats, GetWafLogsDto } from '../types/waf.types';
+import type { WafLogEntry, WafDashboardStats } from '../types/waf.types';
 
 interface WafLogsState {
   // Data

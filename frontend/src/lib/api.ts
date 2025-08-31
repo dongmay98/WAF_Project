@@ -48,5 +48,9 @@ export const wafLogsApi = {
   
   testAllAttacks: (target?: string, count?: number) => 
     api.post('/api/waf-logs/test/all-attacks', { target, count }),
+
+  // 원본 감사 로그 조회
+  getRawAudit: (limit = 200) =>
+    api.get('/api/waf-logs/raw', { params: { limit } }),
 };
 

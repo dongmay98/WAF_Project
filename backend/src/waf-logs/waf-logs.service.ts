@@ -19,12 +19,17 @@ interface WafStatsDto {
   endDate?: string;
 }
 import axios from 'axios';
+import http from 'http';
+import https from 'https';
+import { promises as fsp } from 'fs';
 
 @Injectable()
 export class WafLogsService {
   constructor(
     @InjectModel(WafLog.name) private wafLogModel: Model<WafLogDocument>,
   ) {}
+
+  private httpClient?: ReturnType<typeof axios.create>;
 
   async findAll(query: GetWafLogsDto) {
     const { page = 1, limit = 10, startDate, endDate, clientIp, ruleId, severity } = query;
@@ -150,6 +155,8 @@ export class WafLogsService {
 
   // 보안 테스트 메서드들
   async simulateSqlInjectionAttack(target = 'http://localhost:8080') {
+    const resolvedTarget = this.resolveTargetForDocker(target);
+    const client = this.httpClient ?? (this.httpClient = this.createHttpClient());
     const sqlPayloads = [
       "1' OR '1'='1",
       "1' UNION SELECT 1,2,3--",
@@ -167,10 +174,7 @@ export class WafLogsService {
     }> = [];
     for (const payload of sqlPayloads) {
       try {
-        const response = await axios.get(`${target}/?id=${encodeURIComponent(payload)}`, {
-          timeout: 5000,
-          validateStatus: () => true, // 모든 HTTP 상태 코드 허용
-        });
+        const response = await client.get(`${resolvedTarget}/?id=${encodeURIComponent(payload)}`);
 
         const logEntry = await this.createTestLogEntry({
           method: 'GET',
@@ -189,6 +193,16 @@ export class WafLogsService {
         });
 
       } catch (error) {
+        // Persist error as a log entry for visibility
+        await this.createTestLogEntry({
+          method: 'GET',
+          uri: `/?id=${payload}`,
+          responseCode: 0,
+          attackType: 'SQL Injection',
+          payload,
+          isBlocked: true,
+        });
+
         results.push({
           payload,
           status: 'ERROR',
@@ -208,6 +222,8 @@ export class WafLogsService {
   }
 
   async simulateXssAttack(target = 'http://localhost:8080') {
+    const resolvedTarget = this.resolveTargetForDocker(target);
+    const client = this.httpClient ?? (this.httpClient = this.createHttpClient());
     const xssPayloads = [
       "<script>alert('XSS')</script>",
       "<img src=x onerror=alert('XSS')>",
@@ -225,10 +241,7 @@ export class WafLogsService {
     }> = [];
     for (const payload of xssPayloads) {
       try {
-        const response = await axios.get(`${target}/search?q=${encodeURIComponent(payload)}`, {
-          timeout: 5000,
-          validateStatus: () => true,
-        });
+        const response = await client.get(`${resolvedTarget}/search?q=${encodeURIComponent(payload)}`);
 
         const logEntry = await this.createTestLogEntry({
           method: 'GET',
@@ -247,6 +260,15 @@ export class WafLogsService {
         });
 
       } catch (error) {
+        await this.createTestLogEntry({
+          method: 'GET',
+          uri: `/search?q=${payload}`,
+          responseCode: 0,
+          attackType: 'XSS',
+          payload,
+          isBlocked: true,
+        });
+
         results.push({
           payload,
           status: 'ERROR',
@@ -266,6 +288,8 @@ export class WafLogsService {
   }
 
   async simulateCommandInjectionAttack(target = 'http://localhost:8080') {
+    const resolvedTarget = this.resolveTargetForDocker(target);
+    const client = this.httpClient ?? (this.httpClient = this.createHttpClient());
     const cmdPayloads = [
       "; ls -la",
       "| cat /etc/passwd",
@@ -283,14 +307,7 @@ export class WafLogsService {
     }> = [];
     for (const payload of cmdPayloads) {
       try {
-        const response = await axios.post(`${target}/exec`, 
-          { command: payload }, 
-          {
-            timeout: 5000,
-            validateStatus: () => true,
-            headers: { 'Content-Type': 'application/json' }
-          }
-        );
+        const response = await client.post(`${resolvedTarget}/exec`, { command: payload });
 
         const logEntry = await this.createTestLogEntry({
           method: 'POST',
@@ -309,6 +326,15 @@ export class WafLogsService {
         });
 
       } catch (error) {
+        await this.createTestLogEntry({
+          method: 'POST',
+          uri: '/exec',
+          responseCode: 0,
+          attackType: 'Command Injection',
+          payload,
+          isBlocked: true,
+        });
+
         results.push({
           payload,
           status: 'ERROR',
@@ -328,6 +354,8 @@ export class WafLogsService {
   }
 
   async simulateDirectoryTraversalAttack(target = 'http://localhost:8080') {
+    const resolvedTarget = this.resolveTargetForDocker(target);
+    const client = this.httpClient ?? (this.httpClient = this.createHttpClient());
     const traversalPayloads = [
       "../../../etc/passwd",
       "..\\..\\..\\windows\\system32\\drivers\\etc\\hosts",
@@ -345,10 +373,7 @@ export class WafLogsService {
     }> = [];
     for (const payload of traversalPayloads) {
       try {
-        const response = await axios.get(`${target}/file?path=${encodeURIComponent(payload)}`, {
-          timeout: 5000,
-          validateStatus: () => true,
-        });
+        const response = await client.get(`${resolvedTarget}/file?path=${encodeURIComponent(payload)}`);
 
         const logEntry = await this.createTestLogEntry({
           method: 'GET',
@@ -367,6 +392,15 @@ export class WafLogsService {
         });
 
       } catch (error) {
+        await this.createTestLogEntry({
+          method: 'GET',
+          uri: `/file?path=${payload}`,
+          responseCode: 0,
+          attackType: 'Directory Traversal',
+          payload,
+          isBlocked: true,
+        });
+
         results.push({
           payload,
           status: 'ERROR',
@@ -386,6 +420,7 @@ export class WafLogsService {
   }
 
   async simulateAllAttacks(target = 'http://localhost:8080', count = 1) {
+    const resolvedTarget = this.resolveTargetForDocker(target);
     const results: Array<{
       round: number;
       sqlInjection: any;
@@ -395,12 +430,11 @@ export class WafLogsService {
     }> = [];
     
     for (let i = 0; i < count; i++) {
-      const [sqlResults, xssResults, cmdResults, traversalResults] = await Promise.all([
-        this.simulateSqlInjectionAttack(target),
-        this.simulateXssAttack(target),
-        this.simulateCommandInjectionAttack(target),
-        this.simulateDirectoryTraversalAttack(target),
-      ]);
+      // 순차 실행로 전환하여 타임아웃/병목 가능성 완화
+      const sqlResults = await this.simulateSqlInjectionAttack(resolvedTarget);
+      const xssResults = await this.simulateXssAttack(resolvedTarget);
+      const cmdResults = await this.simulateCommandInjectionAttack(resolvedTarget);
+      const traversalResults = await this.simulateDirectoryTraversalAttack(resolvedTarget);
 
       results.push({
         round: i + 1,
@@ -434,6 +468,53 @@ export class WafLogsService {
       blockingRate: `${((totalBlocked / totalTests) * 100).toFixed(1)}%`,
       results,
     };
+  }
+
+  private resolveTargetForDocker(input: string): string {
+    try {
+      const url = new URL(input);
+      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+        url.hostname = 'crs-nginx';
+      }
+      return url.toString().replace(/\/$/, '');
+    } catch {
+      return input;
+    }
+  }
+
+  private createHttpClient() {
+    const agentOptions = { keepAlive: true, maxSockets: 8 } as const;
+    const instance = axios.create({
+      timeout: 15000,
+      validateStatus: () => true,
+      headers: { 'Connection': 'keep-alive' },
+    });
+    // @ts-ignore keep-alive agents
+    instance.defaults.httpAgent = new http.Agent(agentOptions);
+    // @ts-ignore keep-alive agents
+    instance.defaults.httpsAgent = new https.Agent(agentOptions);
+    return instance;
+  }
+
+  // 원본 감사 로그 파일에서 최근 라인 반환
+  async getRawAuditLog(limit = 200): Promise<Array<{ raw: string; parsed?: any }>> {
+    const path = process.env.AUDIT_LOG_FILE || '/var/log/modsecurity/audit.log';
+    try {
+      const content = await fsp.readFile(path, 'utf8');
+      const lines = content
+        .split(/\r?\n/)
+        .filter((l) => l.trim().length > 0);
+      const tail = lines.slice(-Math.max(1, Math.min(limit, 2000)));
+      return tail.map((raw) => {
+        try {
+          return { raw, parsed: JSON.parse(raw) };
+        } catch {
+          return { raw };
+        }
+      });
+    } catch (e) {
+      return [];
+    }
   }
 
   private async createTestLogEntry(testData: {
