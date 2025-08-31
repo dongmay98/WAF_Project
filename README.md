@@ -25,11 +25,9 @@ docker compose up -d
 - WAF(Target): http://localhost:8080
 - MongoDB: localhost:27018, Redis: localhost:6380
 
-## 환경 변수(핵심)
-Backend 컨테이너 기준:
-- MONGODB_URI: mongodb://admin:password@mongo:27017/waf-dashboard?authSource=admin
-- AUDIT_LOG_FILE: /var/log/modsecurity/audit.log
-- FRONTEND_URL, JWT_SECRET, GOOGLE_CLIENT_ID/SECRET/CALLBACK_URL
+## 환경 변수
+-  백엔드/프론트 예시는 `.env.sample` 참고
+- backend: `backend/.env.sample`, frontend: `frontend/.env.sample`
 
 ## WAF 설정 요약
 - docker-compose: `crs-nginx`가 `dashboard-backend:3001`을 보호
