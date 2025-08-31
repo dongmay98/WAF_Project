@@ -23,16 +23,11 @@ export interface WafLogEntry {
 
 // 대시보드 통계 타입
 export interface WafDashboardStats {
-  topBlockedIps: any;
-  blockedRequests: any;
-  totalRequests: any;
-  totalLogs: number;
-  blockedLogs: number;
-  topAttackTypes: { type: string; count: number }[];
-  topClientIps: { ip: string; count: number }[];
-  recentLogs: WafLogEntry[];
-  logsByHour: { hour: string; count: number }[];
-  severityDistribution: { severity: number; count: number }[];
+  totalRequests: number;
+  blockedRequests: number;
+  topBlockedIps: { ip: string; count: number }[];
+  topBlockedRules: { ruleId: string; count: number }[];
+  attackTypeDistribution: { type: string; count: number }[];
 }
 
 // API 요청/응답 타입

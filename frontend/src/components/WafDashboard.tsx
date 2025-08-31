@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   Container,
-  Grid,
   Paper,
   Typography,
   Card,
@@ -11,19 +10,14 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import {
-  Security,
-  Block,
-  Timeline,
-  Warning,
-  Dashboard,
-  BugReport,
-} from '@mui/icons-material';
+import { Grid } from '@mui/material';
+import { Dashboard, BugReport } from '@mui/icons-material';
 import { useWafLogsStore } from '../stores/wafLogsStore';
 import { wafLogsApi } from '../lib/api';
 import WafLogsTable from './WafLogsTable';
 import WafStatsCards from './WafStatsCards';
 import { SecurityTestPanel } from './SecurityTestPanel';
+import RawAuditLogViewer from './RawAuditLogViewer';
 import toast from 'react-hot-toast';
 
 interface TabPanelProps {
@@ -52,7 +46,6 @@ const WafDashboard: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   
   const {
-    logs,
     stats,
     isLoading,
     isLoadingStats,
@@ -112,7 +105,7 @@ const WafDashboard: React.FC = () => {
   };
 
   // 탭 변경 핸들러
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -171,6 +164,9 @@ const WafDashboard: React.FC = () => {
               </Typography>
               <WafLogsTable />
             </Paper>
+          </Grid>
+          <Grid item xs={12}>
+            <RawAuditLogViewer />
           </Grid>
         </Grid>
       </TabPanel>
