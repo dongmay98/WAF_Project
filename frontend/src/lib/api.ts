@@ -55,8 +55,5 @@ export const wafLogsApi = {
 };
 
 // AI API (Groq-backed)
-export const aiApi = {
-  generateRule: (payload: { description: string; appContext?: string; ruleType?: 'block' | 'allow' | 'exclude' | 'tune' }) =>
-    api.post('/api/ai/modsecurity/rule', payload),
-};
+// AI API removed
 
