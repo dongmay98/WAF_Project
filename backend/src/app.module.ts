@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { WafLogsModule } from './waf-logs/waf-logs.module';
 import { AuditIngestModule } from './audit-ingest/audit-ingest.module';
 import { AuthModule } from './auth/auth.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AuthModule } from './auth/auth.module';
     WafLogsModule,
     AuditIngestModule,
     AuthModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
