@@ -54,3 +54,9 @@ export const wafLogsApi = {
     api.get('/api/waf-logs/raw', { params: { limit } }),
 };
 
+// AI API (Groq-backed)
+export const aiApi = {
+  generateRule: (payload: { description: string; appContext?: string; ruleType?: 'block' | 'allow' | 'exclude' | 'tune' }) =>
+    api.post('/api/ai/modsecurity/rule', payload),
+};
+

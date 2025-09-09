@@ -95,6 +95,9 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       # ModSecurity audit log file path (Serial file)
       AUDIT_LOG_FILE: ${AUDIT_LOG_FILE:-/var/log/modsecurity/audit.log}
+      # Optional Groq AI for rule generation
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
     depends_on:
       - mongo
       - redis

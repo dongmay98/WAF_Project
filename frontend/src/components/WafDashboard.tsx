@@ -11,13 +11,14 @@ import {
   Tab,
 } from '@mui/material';
 import { Grid } from '@mui/material';
-import { Dashboard, BugReport } from '@mui/icons-material';
+import { Dashboard, BugReport, AutoFixHigh } from '@mui/icons-material';
 import { useWafLogsStore } from '../stores/wafLogsStore';
 import { wafLogsApi } from '../lib/api';
 import WafLogsTable from './WafLogsTable';
 import WafStatsCards from './WafStatsCards';
 import { SecurityTestPanel } from './SecurityTestPanel';
 import RawAuditLogViewer from './RawAuditLogViewer';
+import RuleAssistant from './RuleAssistant';
 import toast from 'react-hot-toast';
 
 interface TabPanelProps {
@@ -147,6 +148,12 @@ const WafDashboard: React.FC = () => {
             id="tab-1"
             aria-controls="tabpanel-1"
           />
+          <Tab 
+            icon={<AutoFixHigh />} 
+            label="Rule Assistant" 
+            id="tab-2"
+            aria-controls="tabpanel-2"
+          />
         </Tabs>
       </Box>
 
@@ -177,6 +184,11 @@ const WafDashboard: React.FC = () => {
           fetchLogs();
           fetchStats();
         }} />
+      </TabPanel>
+
+      {/* Rule Assistant */}
+      <TabPanel value={tabValue} index={2}>
+        <RuleAssistant />
       </TabPanel>
     </Container>
   );
