@@ -140,6 +140,18 @@ export class WafLogsController {
     return this.wafLogsService.simulateDirectoryTraversalAttack(body.target, tenantId);
   }
 
+  @Post('test/file-upload')
+  @Roles('admin', 'analyst', 'viewer')
+  @ApiOperation({ summary: '악성 파일 업로드 테스트' })
+  @ApiResponse({ status: 200, description: '파일 업로드 테스트가 완료되었습니다.' })
+  async testFileUpload(@Body() body: { target?: string }, @Req() req: Request) {
+    const user = (req as any).user;
+    const tenantId = user.tenant?._id;
+    this.logger.debug(`[WAF-TEST] Controller received request. User from JWT: ${JSON.stringify(user)}`);
+    this.logger.debug(`[WAF-TEST] Extracted tenantId for service: ${tenantId}`);
+    return this.wafLogsService.simulateFileUploadAttack(body.target, tenantId);
+  }
+
   @Post('test/all-attacks')
   @Roles('admin', 'analyst', 'viewer')
   @ApiOperation({ summary: '모든 공격 패턴 테스트' })

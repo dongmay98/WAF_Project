@@ -390,6 +390,86 @@ export class WafLogsService {
     };
   }
 
+  async simulateFileUploadAttack(target = 'http://localhost:8080', tenantId?: string) {
+    const resolvedTarget = this.resolveTargetForDocker(target);
+    const client = this.createHttpClient(tenantId);
+    
+    // 악성 파일 업로드 시뮬레이션 (실제 파일 대신 파일명과 Content-Type 헤더로 테스트)
+    const maliciousFiles = [
+      { filename: 'shell.php', contentType: 'application/x-php', content: '<?php system($_GET["cmd"]); ?>' },
+      { filename: 'backdoor.jsp', contentType: 'application/x-jsp', content: '<%@ page import="java.io.*" %>' },
+      { filename: 'webshell.asp', contentType: 'application/x-asp', content: '<%eval request("cmd")%>' },
+      { filename: 'exploit.php5', contentType: 'application/x-php', content: '<?php phpinfo(); ?>' },
+      { filename: 'malware.phtml', contentType: 'text/html', content: '<?php exec($_POST["cmd"]); ?>' }
+    ];
+
+    const results: Array<{
+      filename: string;
+      status: number | string;
+      blocked: boolean;
+      logId?: string;
+      error?: string;
+    }> = [];
+
+    for (const file of maliciousFiles) {
+      try {
+        // FormData 시뮬레이션
+        const formData = new FormData();
+        const blob = new Blob([file.content], { type: file.contentType });
+        formData.append('file', blob, file.filename);
+
+        const response = await client.post(`${resolvedTarget}/upload`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        const logEntry = await this.createTestLogEntry({
+          method: 'POST',
+          uri: `/upload (${file.filename})`,
+          responseCode: response.status,
+          attackType: 'Malicious File Upload',
+          payload: `${file.filename} (${file.contentType})`,
+          isBlocked: response.status === 403 || response.status === 406,
+          tenantId,
+        });
+
+        results.push({
+          filename: file.filename,
+          status: response.status,
+          blocked: response.status === 403 || response.status === 406,
+          logId: logEntry._id?.toString(),
+        });
+
+      } catch (error) {
+        await this.createTestLogEntry({
+          method: 'POST',
+          uri: `/upload (${file.filename})`,
+          responseCode: 0,
+          attackType: 'Malicious File Upload',
+          payload: `${file.filename} (${file.contentType})`,
+          isBlocked: true,
+          tenantId,
+        });
+
+        results.push({
+          filename: file.filename,
+          status: 'ERROR',
+          blocked: true,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      attackType: 'Malicious File Upload',
+      target,
+      totalTests: maliciousFiles.length,
+      blockedCount: results.filter(r => r.blocked).length,
+      results,
+    };
+  }
+
   async simulateDirectoryTraversalAttack(target = 'http://localhost:8080', tenantId?: string) {
     const resolvedTarget = this.resolveTargetForDocker(target);
     const client = this.createHttpClient(tenantId);
@@ -466,6 +546,7 @@ export class WafLogsService {
       xss: any;
       commandInjection: any;
       directoryTraversal: any;
+      fileUpload: any;
     }> = [];
     
     for (let i = 0; i < count; i++) {
@@ -474,6 +555,7 @@ export class WafLogsService {
       const xssResults = await this.simulateXssAttack(resolvedTarget, tenantId);
       const cmdResults = await this.simulateCommandInjectionAttack(resolvedTarget, tenantId);
       const traversalResults = await this.simulateDirectoryTraversalAttack(resolvedTarget, tenantId);
+      const fileUploadResults = await this.simulateFileUploadAttack(resolvedTarget, tenantId);
 
       results.push({
         round: i + 1,
@@ -481,6 +563,7 @@ export class WafLogsService {
         xss: xssResults,
         commandInjection: cmdResults,
         directoryTraversal: traversalResults,
+        fileUpload: fileUploadResults,
       });
 
       // 테스트 간격 (1초)
@@ -491,12 +574,12 @@ export class WafLogsService {
 
     const totalTests = results.reduce((acc, round) => 
       acc + round.sqlInjection.totalTests + round.xss.totalTests + 
-      round.commandInjection.totalTests + round.directoryTraversal.totalTests, 0
+      round.commandInjection.totalTests + round.directoryTraversal.totalTests + round.fileUpload.totalTests, 0
     );
 
     const totalBlocked = results.reduce((acc, round) => 
       acc + round.sqlInjection.blockedCount + round.xss.blockedCount + 
-      round.commandInjection.blockedCount + round.directoryTraversal.blockedCount, 0
+      round.commandInjection.blockedCount + round.directoryTraversal.blockedCount + round.fileUpload.blockedCount, 0
     );
 
     return {
@@ -637,6 +720,7 @@ export class WafLogsService {
       'XSS': '941110',
       'Command Injection': '932160',
       'Directory Traversal': '930100',
+      'Malicious File Upload': '920470',
     };
     return ruleMap[attackType] || '900000';
   }
@@ -647,6 +731,7 @@ export class WafLogsService {
       'XSS': 4,
       'Command Injection': 5,
       'Directory Traversal': 3,
+      'Malicious File Upload': 4,
     };
     return severityMap[attackType] || 3;
   }

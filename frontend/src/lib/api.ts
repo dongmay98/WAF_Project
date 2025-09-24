@@ -55,6 +55,9 @@ export const wafLogsApi = {
   testDirectoryTraversal: (target?: string) => 
     api.post('/custom/security-logs/test/directory-traversal', { target }),
   
+  testFileUpload: (target?: string) => 
+    api.post('/custom/security-logs/test/file-upload', { target }),
+  
   testAllAttacks: (target?: string, count?: number) => 
     api.post('/custom/security-logs/test/all-attacks', { target, count }),
 

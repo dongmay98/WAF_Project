@@ -30,6 +30,7 @@ import {
   Error,
   Warning,
   Traffic,
+  CloudUpload,
 } from '@mui/icons-material';
 import { wafLogsApi } from '../lib/api';
 import toast from 'react-hot-toast';
@@ -165,6 +166,21 @@ export const SecurityTestPanel: React.FC<SecurityTestPanelProps> = ({ onTestComp
       console.error(error);
     } finally {
       setTestLoading('traversal', false);
+    }
+  };
+
+  const runFileUploadTest = async () => {
+    setTestLoading('fileUpload', true);
+    try {
+      const response = await wafLogsApi.testFileUpload(target);
+      setResults(prev => ({ ...prev, fileUpload: response.data }));
+      toast.success(`파일 업로드 테스트 완료: ${response.data.blockedCount}/${response.data.totalTests} 차단`);
+      onTestComplete?.();
+    } catch (error) {
+      toast.error('파일 업로드 테스트 실패');
+      console.error(error);
+    } finally {
+      setTestLoading('fileUpload', false);
     }
   };
 
@@ -550,6 +566,31 @@ export const SecurityTestPanel: React.FC<SecurityTestPanelProps> = ({ onTestComp
                 fullWidth
               >
                 {loading.traversal ? '테스트 중...' : 'Directory Traversal 테스트 실행'}
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* 파일 업로드 테스트 */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <CloudUpload color="warning" />
+                <Typography variant="h6">악성 파일 업로드 테스트</Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                .php, .jsp, .asp 등 악성 파일 확장자 업로드를 테스트합니다.
+              </Typography>
+              <Button
+                variant="contained"
+                color="warning"
+                startIcon={loading.fileUpload ? <CircularProgress size={20} /> : <PlayArrow />}
+                onClick={runFileUploadTest}
+                disabled={loading.fileUpload}
+                fullWidth
+              >
+                {loading.fileUpload ? '테스트 중...' : '악성 파일 업로드 테스트 실행'}
               </Button>
             </CardContent>
           </Card>
