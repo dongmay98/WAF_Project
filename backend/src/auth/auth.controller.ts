@@ -23,11 +23,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Google OAuth 콜백 처리' })
   @ApiResponse({ status: 200, description: '로그인 성공 후 JWT 토큰을 반환합니다.' })
   async googleAuthRedirect(@Req() req: express.Request, @Res() res: express.Response) {
-    const result = await this.authService.login(req.user);
+    const user = await this.authService.validateUser(req.user);
+    const token = this.authService.generateJwt(user);
     
     // 프론트엔드로 리다이렉트하면서 토큰 전달
     const frontend = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
-    const redirectUrl = `${frontend}/auth/callback?token=${result.access_token}`;
+    const redirectUrl = `${frontend}/auth/callback?token=${token}`;
     res.redirect(redirectUrl);
   }
 

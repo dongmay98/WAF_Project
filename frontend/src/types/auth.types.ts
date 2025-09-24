@@ -4,6 +4,19 @@ export interface User {
   name: string;
   picture: string;
   role: string;
+  tenant?: {
+    _id: string;
+    name: string;
+    slug: string;
+    subscription: {
+      plan: 'free' | 'pro' | 'enterprise';
+      limits: {
+        logs_per_month: number;
+        endpoints: number;
+        custom_rules: number;
+      };
+    };
+  };
 }
 
 export interface AuthResponse {

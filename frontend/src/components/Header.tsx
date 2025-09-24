@@ -8,8 +8,10 @@ import {
   Menu,
   MenuItem,
   IconButton,
+  Chip,
+  Divider,
 } from '@mui/material';
-import { AccountCircle, Logout } from '@mui/icons-material';
+import { AccountCircle, Logout, Business, Star } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 
 const Header: React.FC = () => {
@@ -37,9 +39,28 @@ const Header: React.FC = () => {
         </Typography>
         
         {user && (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body2" sx={{ mr: 2 }}>
-              {user.name}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* 테넌트 정보 */}
+            {user.tenant && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Business fontSize="small" />
+                <Typography variant="body2" sx={{ color: 'inherit' }}>
+                  {user.tenant.name || '조직'}
+                </Typography>
+                {user.tenant.subscription?.plan && (
+                  <Chip
+                    label={user.tenant.subscription.plan.toUpperCase()}
+                    size="small"
+                    color={user.tenant.subscription.plan === 'enterprise' ? 'warning' : 
+                           user.tenant.subscription.plan === 'pro' ? 'secondary' : 'default'}
+                    icon={user.tenant.subscription.plan === 'enterprise' ? <Star /> : undefined}
+                  />
+                )}
+              </Box>
+            )}
+            
+            <Typography variant="body2">
+              {user.name} ({user.role || 'unknown'})
             </Typography>
             <IconButton
               size="large"
@@ -73,6 +94,28 @@ const Header: React.FC = () => {
               <MenuItem onClick={handleClose}>
                 <Typography variant="body2">{user.email}</Typography>
               </MenuItem>
+              <MenuItem onClick={handleClose}>
+                <Typography variant="body2" color="text.secondary">
+                  Role: {user.role}
+                </Typography>
+              </MenuItem>
+              {user.tenant && (
+                <>
+                  <Divider />
+                  <MenuItem onClick={handleClose}>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">
+                        {user.tenant.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Plan: {user.tenant.subscription.plan} | 
+                        {user.tenant.subscription.limits.logs_per_month} logs/month
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                </>
+              )}
+              <Divider />
               <MenuItem onClick={handleLogout}>
                 <Logout sx={{ mr: 1 }} />
                 로그아웃

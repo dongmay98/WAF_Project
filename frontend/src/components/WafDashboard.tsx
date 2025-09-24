@@ -11,12 +11,14 @@ import {
   Tab,
 } from '@mui/material';
 import { Grid } from '@mui/material';
-import { Dashboard, BugReport } from '@mui/icons-material';
+import { Dashboard, BugReport, Settings } from '@mui/icons-material';
 import { useWafLogsStore } from '../stores/wafLogsStore';
+import { useAuthStore } from '../stores/authStore';
 import { wafLogsApi } from '../lib/api';
 import WafLogsTable from './WafLogsTable';
 import WafStatsCards from './WafStatsCards';
 import { SecurityTestPanel } from './SecurityTestPanel';
+import { WafConfigPanel } from './WafConfigPanel';
 import RawAuditLogViewer from './RawAuditLogViewer';
 // RuleAssistant removed
 import toast from 'react-hot-toast';
@@ -45,6 +47,7 @@ function TabPanel(props: TabPanelProps) {
 
 const WafDashboard: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
+  const { user } = useAuthStore();
   
   const {
     stats,
@@ -142,13 +145,20 @@ const WafDashboard: React.FC = () => {
             id="tab-0"
             aria-controls="tabpanel-0"
           />
+          {/* WAF 설정 (임시로 모든 역할에서 접근 가능) */}
           <Tab 
-            icon={<BugReport />} 
-            label="보안 테스트" 
+            icon={<Settings />} 
+            label="WAF 설정" 
             id="tab-1"
             aria-controls="tabpanel-1"
           />
-          
+          {/* 보안 테스트 (임시로 모든 역할에서 접근 가능) */}
+          <Tab 
+            icon={<BugReport />} 
+            label="보안 테스트" 
+            id="tab-2"
+            aria-controls="tabpanel-2"
+          />
         </Tabs>
       </Box>
 
@@ -167,14 +177,22 @@ const WafDashboard: React.FC = () => {
               <WafLogsTable />
             </Paper>
           </Grid>
-          <Grid item xs={12}>
-            <RawAuditLogViewer />
-          </Grid>
+          {/* 원본 감사 로그 - admin/analyst만 접근 가능 */}
+          {user && (user.role === 'admin' || user.role === 'analyst') && (
+            <Grid item xs={12}>
+              <RawAuditLogViewer />
+            </Grid>
+          )}
         </Grid>
       </TabPanel>
 
-      {/* 보안 테스트 탭 */}
+      {/* WAF 설정 탭 (임시로 모든 역할에서 접근 가능) */}
       <TabPanel value={tabValue} index={1}>
+        <WafConfigPanel />
+      </TabPanel>
+
+      {/* 보안 테스트 탭 (임시로 모든 역할에서 접근 가능) */}
+      <TabPanel value={tabValue} index={2}>
         <SecurityTestPanel onTestComplete={() => {
           fetchLogs();
           fetchStats();

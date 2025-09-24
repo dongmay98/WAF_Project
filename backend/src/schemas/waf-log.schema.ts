@@ -1,10 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type WafLogDocument = WafLog & Document;
 
 @Schema({ timestamps: true })
 export class WafLog {
+  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
+  tenant: Types.ObjectId;
   @Prop({ required: true })
   timestamp: Date;
 

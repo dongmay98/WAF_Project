@@ -8,6 +8,8 @@ import Header from './components/Header';
 import LoginPage from './components/LoginPage';
 import AuthCallback from './components/AuthCallback';
 import WafDashboard from './components/WafDashboard';
+import AdminLogin from './components/AdminLogin';
+import AdminDashboard from './components/AdminDashboard';
 import './App.css';
 
 const theme = createTheme({
@@ -55,6 +57,7 @@ function App() {
       <Router>
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
           <Routes>
+            {/* 일반 사용자 경로 */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
@@ -68,6 +71,11 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            
+            {/* 관리자 경로 */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Box>
