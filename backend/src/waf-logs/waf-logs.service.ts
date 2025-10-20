@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { WafLog, WafLogDocument } from '../schemas/waf-log.schema';
+import { Tenant, TenantDocument } from '../schemas/tenant.schema';
 // import { GetWafLogsDto, WafStatsDto } from '../../../shared/dto/waf.dto';
 
 interface GetWafLogsDto {
@@ -12,6 +13,7 @@ interface GetWafLogsDto {
   clientIp?: string;
   ruleId?: string;
   severity?: number;
+  tenantId?: string;
 }
 
 interface WafStatsDto {
@@ -27,11 +29,13 @@ import { promises as fsp } from 'fs';
 export class WafLogsService {
   constructor(
     @InjectModel(WafLog.name) private wafLogModel: Model<WafLogDocument>,
+    @InjectModel(Tenant.name) private tenantModel: Model<TenantDocument>,
   ) {}
 
   private httpClient?: ReturnType<typeof axios.create>;
 
-  async findAll(query: GetWafLogsDto) {
+  async findAll(query: GetWafLogsDto, isAdmin = false, tenantId?: string) {
+    console.log(`[DEBUG] WafLogsService - findAll - Received tenantId: ${tenantId}`);
     const { page = 1, limit = 10, startDate, endDate, clientIp, ruleId, severity } = query;
     
     // 필터 조건 생성
@@ -47,6 +51,12 @@ export class WafLogsService {
     if (ruleId) filter.ruleId = ruleId;
     if (severity !== undefined) filter.severity = severity;
 
+    // 테넌트별 데이터 격리: 관리자가 아닌 경우 해당 테넌트 데이터만 조회
+    if (!isAdmin && tenantId) {
+      filter.tenant = new Types.ObjectId(tenantId);
+    }
+    console.log('[DEBUG] WafLogsService - findAll - Final MongoDB filter:', JSON.stringify(filter, null, 2));
+
     // 페이지네이션 계산
     const skip = (page - 1) * limit;
 
@@ -59,8 +69,16 @@ export class WafLogsService {
       .exec();
 
     const total = await this.wafLogModel.countDocuments(filter);
+    
+    console.log(`[DEBUG] WafLogsService - findAll - Query result: Found ${logs.length} logs, Total: ${total}`);
+    console.log(`[DEBUG] WafLogsService - findAll - First log sample:`, logs[0] ? JSON.stringify({
+      _id: logs[0]._id,
+      tenant: logs[0].tenant,
+      isBlocked: logs[0].isBlocked,
+      attackType: logs[0].attackType
+    }, null, 2) : 'No logs found');
 
-    return {
+    const result = {
       logs,
       pagination: {
         page,
@@ -69,13 +87,21 @@ export class WafLogsService {
         pages: Math.ceil(total / limit),
       },
     };
+    
+    console.log(`[DEBUG] WafLogsService - findAll - Final result structure:`, JSON.stringify({
+      logsCount: result.logs.length,
+      pagination: result.pagination,
+      firstLogId: result.logs[0]?._id
+    }, null, 2));
+    
+    return result;
   }
 
   async findById(id: string) {
     return this.wafLogModel.findById(id).exec();
   }
 
-  async getStats(query: WafStatsDto) {
+  async getStats(query: WafStatsDto, isAdmin = false, tenantId?: string) {
     const { startDate, endDate } = query;
     
     // 기본 필터 (최근 24시간)
@@ -89,6 +115,11 @@ export class WafLogsService {
       const oneDayAgo = new Date();
       oneDayAgo.setDate(oneDayAgo.getDate() - 1);
       filter.timestamp = { $gte: oneDayAgo };
+    }
+
+    // 테넌트별 데이터 격리: 관리자가 아닌 경우 해당 테넌트 데이터만 조회
+    if (!isAdmin && tenantId) {
+      filter.tenant = new Types.ObjectId(tenantId);
     }
 
     const [
@@ -147,16 +178,16 @@ export class WafLogsService {
       return { message: 'Dummy data already exists' };
     }
 
-    const dummyLogs = this.generateDummyLogs(100);
+    const dummyLogs = await this.generateDummyLogs(100);
     await this.wafLogModel.insertMany(dummyLogs);
     
     return { message: `Created ${dummyLogs.length} dummy WAF logs` };
   }
 
   // 보안 테스트 메서드들
-  async simulateSqlInjectionAttack(target = 'http://localhost:8080') {
+  async simulateSqlInjectionAttack(target = 'http://localhost:8080', tenantId?: string) {
     const resolvedTarget = this.resolveTargetForDocker(target);
-    const client = this.httpClient ?? (this.httpClient = this.createHttpClient());
+    const client = this.createHttpClient(tenantId);
     const sqlPayloads = [
       "1' OR '1'='1",
       "1' UNION SELECT 1,2,3--",
@@ -183,6 +214,7 @@ export class WafLogsService {
           attackType: 'SQL Injection',
           payload,
           isBlocked: response.status === 403,
+          tenantId,
         });
 
         results.push({
@@ -201,6 +233,7 @@ export class WafLogsService {
           attackType: 'SQL Injection',
           payload,
           isBlocked: true,
+          tenantId,
         });
 
         results.push({
@@ -221,9 +254,9 @@ export class WafLogsService {
     };
   }
 
-  async simulateXssAttack(target = 'http://localhost:8080') {
+  async simulateXssAttack(target = 'http://localhost:8080', tenantId?: string) {
     const resolvedTarget = this.resolveTargetForDocker(target);
-    const client = this.httpClient ?? (this.httpClient = this.createHttpClient());
+    const client = this.createHttpClient(tenantId);
     const xssPayloads = [
       "<script>alert('XSS')</script>",
       "<img src=x onerror=alert('XSS')>",
@@ -250,6 +283,7 @@ export class WafLogsService {
           attackType: 'XSS',
           payload,
           isBlocked: response.status === 403,
+          tenantId,
         });
 
         results.push({
@@ -267,6 +301,7 @@ export class WafLogsService {
           attackType: 'XSS',
           payload,
           isBlocked: true,
+          tenantId,
         });
 
         results.push({
@@ -287,9 +322,9 @@ export class WafLogsService {
     };
   }
 
-  async simulateCommandInjectionAttack(target = 'http://localhost:8080') {
+  async simulateCommandInjectionAttack(target = 'http://localhost:8080', tenantId?: string) {
     const resolvedTarget = this.resolveTargetForDocker(target);
-    const client = this.httpClient ?? (this.httpClient = this.createHttpClient());
+    const client = this.createHttpClient(tenantId);
     const cmdPayloads = [
       "; ls -la",
       "| cat /etc/passwd",
@@ -316,6 +351,7 @@ export class WafLogsService {
           attackType: 'Command Injection',
           payload,
           isBlocked: response.status === 403,
+          tenantId,
         });
 
         results.push({
@@ -333,6 +369,7 @@ export class WafLogsService {
           attackType: 'Command Injection',
           payload,
           isBlocked: true,
+          tenantId,
         });
 
         results.push({
@@ -353,9 +390,89 @@ export class WafLogsService {
     };
   }
 
-  async simulateDirectoryTraversalAttack(target = 'http://localhost:8080') {
+  async simulateFileUploadAttack(target = 'http://localhost:8080', tenantId?: string) {
     const resolvedTarget = this.resolveTargetForDocker(target);
-    const client = this.httpClient ?? (this.httpClient = this.createHttpClient());
+    const client = this.createHttpClient(tenantId);
+    
+    // 악성 파일 업로드 시뮬레이션 (실제 파일 대신 파일명과 Content-Type 헤더로 테스트)
+    const maliciousFiles = [
+      { filename: 'shell.php', contentType: 'application/x-php', content: '<?php system($_GET["cmd"]); ?>' },
+      { filename: 'backdoor.jsp', contentType: 'application/x-jsp', content: '<%@ page import="java.io.*" %>' },
+      { filename: 'webshell.asp', contentType: 'application/x-asp', content: '<%eval request("cmd")%>' },
+      { filename: 'exploit.php5', contentType: 'application/x-php', content: '<?php phpinfo(); ?>' },
+      { filename: 'malware.phtml', contentType: 'text/html', content: '<?php exec($_POST["cmd"]); ?>' }
+    ];
+
+    const results: Array<{
+      filename: string;
+      status: number | string;
+      blocked: boolean;
+      logId?: string;
+      error?: string;
+    }> = [];
+
+    for (const file of maliciousFiles) {
+      try {
+        // FormData 시뮬레이션
+        const formData = new FormData();
+        const blob = new Blob([file.content], { type: file.contentType });
+        formData.append('file', blob, file.filename);
+
+        const response = await client.post(`${resolvedTarget}/upload`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        const logEntry = await this.createTestLogEntry({
+          method: 'POST',
+          uri: `/upload (${file.filename})`,
+          responseCode: response.status,
+          attackType: 'Malicious File Upload',
+          payload: `${file.filename} (${file.contentType})`,
+          isBlocked: response.status === 403 || response.status === 406,
+          tenantId,
+        });
+
+        results.push({
+          filename: file.filename,
+          status: response.status,
+          blocked: response.status === 403 || response.status === 406,
+          logId: logEntry._id?.toString(),
+        });
+
+      } catch (error) {
+        await this.createTestLogEntry({
+          method: 'POST',
+          uri: `/upload (${file.filename})`,
+          responseCode: 0,
+          attackType: 'Malicious File Upload',
+          payload: `${file.filename} (${file.contentType})`,
+          isBlocked: true,
+          tenantId,
+        });
+
+        results.push({
+          filename: file.filename,
+          status: 'ERROR',
+          blocked: true,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      attackType: 'Malicious File Upload',
+      target,
+      totalTests: maliciousFiles.length,
+      blockedCount: results.filter(r => r.blocked).length,
+      results,
+    };
+  }
+
+  async simulateDirectoryTraversalAttack(target = 'http://localhost:8080', tenantId?: string) {
+    const resolvedTarget = this.resolveTargetForDocker(target);
+    const client = this.createHttpClient(tenantId);
     const traversalPayloads = [
       "../../../etc/passwd",
       "..\\..\\..\\windows\\system32\\drivers\\etc\\hosts",
@@ -382,6 +499,7 @@ export class WafLogsService {
           attackType: 'Directory Traversal',
           payload,
           isBlocked: response.status === 403,
+          tenantId,
         });
 
         results.push({
@@ -399,6 +517,7 @@ export class WafLogsService {
           attackType: 'Directory Traversal',
           payload,
           isBlocked: true,
+          tenantId,
         });
 
         results.push({
@@ -419,7 +538,7 @@ export class WafLogsService {
     };
   }
 
-  async simulateAllAttacks(target = 'http://localhost:8080', count = 1) {
+  async simulateAllAttacks(target = 'http://localhost:8080', count = 1, tenantId?: string) {
     const resolvedTarget = this.resolveTargetForDocker(target);
     const results: Array<{
       round: number;
@@ -427,14 +546,16 @@ export class WafLogsService {
       xss: any;
       commandInjection: any;
       directoryTraversal: any;
+      fileUpload: any;
     }> = [];
     
     for (let i = 0; i < count; i++) {
       // 순차 실행로 전환하여 타임아웃/병목 가능성 완화
-      const sqlResults = await this.simulateSqlInjectionAttack(resolvedTarget);
-      const xssResults = await this.simulateXssAttack(resolvedTarget);
-      const cmdResults = await this.simulateCommandInjectionAttack(resolvedTarget);
-      const traversalResults = await this.simulateDirectoryTraversalAttack(resolvedTarget);
+      const sqlResults = await this.simulateSqlInjectionAttack(resolvedTarget, tenantId);
+      const xssResults = await this.simulateXssAttack(resolvedTarget, tenantId);
+      const cmdResults = await this.simulateCommandInjectionAttack(resolvedTarget, tenantId);
+      const traversalResults = await this.simulateDirectoryTraversalAttack(resolvedTarget, tenantId);
+      const fileUploadResults = await this.simulateFileUploadAttack(resolvedTarget, tenantId);
 
       results.push({
         round: i + 1,
@@ -442,6 +563,7 @@ export class WafLogsService {
         xss: xssResults,
         commandInjection: cmdResults,
         directoryTraversal: traversalResults,
+        fileUpload: fileUploadResults,
       });
 
       // 테스트 간격 (1초)
@@ -452,12 +574,12 @@ export class WafLogsService {
 
     const totalTests = results.reduce((acc, round) => 
       acc + round.sqlInjection.totalTests + round.xss.totalTests + 
-      round.commandInjection.totalTests + round.directoryTraversal.totalTests, 0
+      round.commandInjection.totalTests + round.directoryTraversal.totalTests + round.fileUpload.totalTests, 0
     );
 
     const totalBlocked = results.reduce((acc, round) => 
       acc + round.sqlInjection.blockedCount + round.xss.blockedCount + 
-      round.commandInjection.blockedCount + round.directoryTraversal.blockedCount, 0
+      round.commandInjection.blockedCount + round.directoryTraversal.blockedCount + round.fileUpload.blockedCount, 0
     );
 
     return {
@@ -482,12 +604,20 @@ export class WafLogsService {
     }
   }
 
-  private createHttpClient() {
+  private createHttpClient(tenantId?: string) {
     const agentOptions = { keepAlive: true, maxSockets: 8 } as const;
+    
+    const headers: Record<string, string> = {
+      'Connection': 'keep-alive',
+    };
+    if (tenantId) {
+      headers['X-Tenant-ID'] = tenantId;
+    }
+
     const instance = axios.create({
       timeout: 15000,
       validateStatus: () => true,
-      headers: { 'Connection': 'keep-alive' },
+      headers,
     });
     // @ts-ignore keep-alive agents
     instance.defaults.httpAgent = new http.Agent(agentOptions);
@@ -524,8 +654,47 @@ export class WafLogsService {
     attackType: string;
     payload: string;
     isBlocked: boolean;
+    tenantId?: string;
   }) {
+    // 테넌트 ID가 제공되면 해당 테넌트 사용, 그렇지 않으면 기본 테넌트 사용 (하위 호환성)
+    let tenant;
+    if (testData.tenantId) {
+      tenant = await this.tenantModel.findById(testData.tenantId);
+      if (!tenant) {
+        throw new Error(`Tenant not found: ${testData.tenantId}`);
+      }
+    } else {
+      // 기본 테넌트를 찾거나 생성 (하위 호환성)
+      tenant = await this.tenantModel.findOne({ slug: 'default-test' });
+      if (!tenant) {
+        tenant = await this.tenantModel.create({
+          name: 'Default Test Tenant',
+          slug: 'default-test',
+          subscription: {
+            plan: 'free',
+            limits: {
+              requests_per_month: 10000,
+              logs_per_month: 100000,
+              custom_rules: 10,
+            },
+            status: 'active',
+            created_at: new Date(),
+          },
+          waf_config: {
+            paranoia_level: 1,
+            blocking_mode: true,
+            custom_rules: [],
+          },
+          usage: {
+            requests_this_month: 0,
+            last_reset: new Date(),
+          },
+        });
+      }
+    }
+
     const logEntry = new this.wafLogModel({
+      tenant: tenant._id,
       timestamp: new Date(),
       clientIp: '127.0.0.1', // 테스트 클라이언트 IP
       requestMethod: testData.method,
@@ -551,6 +720,7 @@ export class WafLogsService {
       'XSS': '941110',
       'Command Injection': '932160',
       'Directory Traversal': '930100',
+      'Malicious File Upload': '920470',
     };
     return ruleMap[attackType] || '900000';
   }
@@ -561,11 +731,40 @@ export class WafLogsService {
       'XSS': 4,
       'Command Injection': 5,
       'Directory Traversal': 3,
+      'Malicious File Upload': 4,
     };
     return severityMap[attackType] || 3;
   }
 
-  private generateDummyLogs(count: number): Partial<WafLog>[] {
+  private async generateDummyLogs(count: number): Promise<Partial<WafLog>[]> {
+    // 기본 테넌트를 찾거나 생성
+    let defaultTenant = await this.tenantModel.findOne({ slug: 'default-test' });
+    if (!defaultTenant) {
+      defaultTenant = await this.tenantModel.create({
+        name: 'Default Test Tenant',
+        slug: 'default-test',
+        subscription: {
+          plan: 'free',
+          limits: {
+            requests_per_month: 10000,
+            logs_per_month: 100000,
+            custom_rules: 10,
+          },
+          status: 'active',
+          created_at: new Date(),
+        },
+        waf_config: {
+          paranoia_level: 1,
+          blocking_mode: true,
+          custom_rules: [],
+        },
+        usage: {
+          requests_this_month: 0,
+          last_reset: new Date(),
+        },
+      });
+    }
+
     const logs: Partial<WafLog>[] = [];
     const ips = ['192.168.1.100', '10.0.0.50', '172.16.0.30', '203.0.113.10', '198.51.100.20'];
     const methods = ['GET', 'POST', 'PUT', 'DELETE'];
@@ -580,6 +779,7 @@ export class WafLogsService {
       timestamp.setMinutes(timestamp.getMinutes() - Math.floor(Math.random() * 1440)); // 최근 24시간 내
 
       logs.push({
+        tenant: defaultTenant._id as any,
         timestamp,
         clientIp: ips[Math.floor(Math.random() * ips.length)],
         requestMethod: methods[Math.floor(Math.random() * methods.length)],

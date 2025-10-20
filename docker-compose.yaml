@@ -95,6 +95,7 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       # ModSecurity audit log file path (Serial file)
       AUDIT_LOG_FILE: ${AUDIT_LOG_FILE:-/var/log/modsecurity/audit.log}
+      
     depends_on:
       - mongo
       - redis

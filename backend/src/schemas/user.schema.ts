@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type UserDocument = User & Document;
 
@@ -17,8 +17,11 @@ export class User {
   @Prop({ required: true })
   googleId: string;
 
-  @Prop({ default: 'user' })
-  role: string;
+  @Prop({ default: 'viewer' })
+  role: 'admin' | 'analyst' | 'viewer';
+
+  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: false })
+  tenant?: Types.ObjectId;
 
   @Prop({ default: true })
   isActive: boolean;

@@ -1,7 +1,20 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { jwtDecode } from 'jwt-decode';
 import { useAuthStore } from '../stores/authStore';
+import type { User } from '../types/auth.types';
+
+interface JwtPayload {
+  sub: string;
+  email: string;
+  name: string;
+  picture: string;
+  role: string;
+  tenant: any;
+  iat: number;
+  exp: number;
+}
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -12,15 +25,15 @@ const AuthCallback: React.FC = () => {
     const token = searchParams.get('token');
     
     if (token) {
-      // 토큰을 디코드하여 사용자 정보 추출 (JWT 토큰에서)
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const user = {
+        const payload = jwtDecode<JwtPayload>(token);
+        const user: User = {
           id: payload.sub,
           email: payload.email,
           name: payload.name || payload.email,
           picture: payload.picture || '',
           role: payload.role || 'user',
+          tenant: payload.tenant,
         };
         
         login(token, user);

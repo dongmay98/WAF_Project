@@ -13,6 +13,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+    // Passport.js는 이 값을 req.user에 첨부합니다.
+    return { 
+      sub: payload.sub, 
+      email: payload.email, 
+      role: payload.role,
+      tenant: payload.tenant,
+      name: payload.name,
+      picture: payload.picture,
+    };
   }
 }

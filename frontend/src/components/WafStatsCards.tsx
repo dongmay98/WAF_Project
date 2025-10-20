@@ -12,8 +12,11 @@ import {
   Security,
   Block,
   Timeline,
+  BusinessCenter,
+  DataUsage,
 } from '@mui/icons-material';
 import type { WafDashboardStats } from '../types/waf.types';
+import { useAuthStore } from '../stores/authStore';
 
 interface WafStatsCardsProps {
   stats: WafDashboardStats | null;
@@ -21,6 +24,8 @@ interface WafStatsCardsProps {
 }
 
 const WafStatsCards: React.FC<WafStatsCardsProps> = ({ stats, isLoading }) => {
+  const { user } = useAuthStore();
+  
   if (isLoading) {
     return (
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -44,20 +49,29 @@ const WafStatsCards: React.FC<WafStatsCardsProps> = ({ stats, isLoading }) => {
     return null;
   }
 
-  const blockRate = stats.totalRequests > 0 
-    ? ((stats.blockedRequests / stats.totalRequests) * 100).toFixed(1)
+  const totalRequests = stats.totalRequests || 0;
+  const blockedRequests = stats.blockedRequests || 0;
+  
+  const blockRate = totalRequests > 0 
+    ? ((blockedRequests / totalRequests) * 100).toFixed(1)
+    : '0';
+
+  // 사용량 계산 (이번 달 기준)
+  const monthlyUsage = user?.tenant?.subscription?.limits?.logs_per_month || 0;
+  const usageRate = monthlyUsage > 0 
+    ? Math.min(((totalRequests / monthlyUsage) * 100), 100).toFixed(1)
     : '0';
 
   const statCards = [
     {
       title: '총 요청',
-      value: stats.totalRequests.toLocaleString(),
+      value: totalRequests.toLocaleString(),
       icon: <Timeline color="primary" />,
       color: 'primary.main',
     },
     {
       title: '차단된 요청',
-      value: stats.blockedRequests.toLocaleString(),
+      value: blockedRequests.toLocaleString(),
       icon: <Block color="error" />,
       color: 'error.main',
     },
@@ -67,7 +81,13 @@ const WafStatsCards: React.FC<WafStatsCardsProps> = ({ stats, isLoading }) => {
       icon: <Security color="warning" />,
       color: 'warning.main',
     },
-    // 공격 유형 카드: 백엔드 스키마에 따라 값이 없을 수 있으므로 제외 또는 안전 처리 필요
+    // 테넌트별 사용량
+    ...(user?.tenant ? [{
+      title: '월 사용량',
+      value: `${usageRate}%`,
+      icon: <DataUsage color="info" />,
+      color: parseFloat(usageRate) > 80 ? 'error.main' : 'info.main',
+    }] : []),
   ];
 
   return (
@@ -94,6 +114,38 @@ const WafStatsCards: React.FC<WafStatsCardsProps> = ({ stats, isLoading }) => {
           </Card>
         </Grid>
       ))}
+
+      {/* 테넌트 구독 정보 */}
+      {user?.tenant && (
+        // @ts-ignore
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <BusinessCenter />
+                구독 정보
+              </Typography>
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  회사: {user.tenant?.name || '조직'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  플랜: {user.tenant?.subscription?.plan?.toUpperCase() || 'FREE'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  월 요청 한도: {(user.tenant?.subscription?.limits?.logs_per_month || 0).toLocaleString()}개
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  엔드포인트: {user.tenant?.subscription?.limits?.endpoints || 1}개
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  커스텀 룰: {user.tenant?.subscription?.limits?.custom_rules || 0}개
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      )}
 
       {/* 상위 차단된 IP들 */}
       {/* @ts-ignore */}

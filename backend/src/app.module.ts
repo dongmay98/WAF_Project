@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { WafLogsModule } from './waf-logs/waf-logs.module';
 import { AuditIngestModule } from './audit-ingest/audit-ingest.module';
 import { AuthModule } from './auth/auth.module';
+import { TenantModule } from './tenant/tenant.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -13,11 +15,16 @@ import { AuthModule } from './auth/auth.module';
       isGlobal: true,
     }),
     MongooseModule.forRoot(
-      process.env.MONGODB_URI || 'mongodb://admin:password@localhost:27018/waf-dashboard?authSource=admin'
+      process.env.MONGODB_URI || 'mongodb://admin:password@mongo:27017/waf-dashboard?authSource=admin'
     ),
+    // Core feature modules first
     WafLogsModule,
     AuditIngestModule,
+    
+    // Other modules
     AuthModule,
+    TenantModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
